@@ -1,7 +1,7 @@
 
 import os
 from tqdm.auto import tqdm
-from opt import config_parser
+from opt import config_parser, args
 
 
 
@@ -305,7 +305,6 @@ if __name__ == '__main__':
     torch.manual_seed(20211202)
     np.random.seed(20211202)
 
-    args = config_parser()
     print(args)
 
     if  args.export_mesh:

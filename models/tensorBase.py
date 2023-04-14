@@ -1,9 +1,10 @@
 import torch
-import torch.nn
+import torch.nn as nn
 import torch.nn.functional as F
 from .sh import eval_sh_bases
 import numpy as np
 import time
+from opt import args
 
 
 def positional_encoding(positions, freqs):
@@ -66,7 +67,7 @@ class MLPRender_Fea(torch.nn.Module):
         self.feape = feape
         layer1 = torch.nn.Linear(self.in_mlpC, featureC)
         layer2 = torch.nn.Linear(featureC, featureC)
-        layer3 = torch.nn.Linear(featureC,3)
+        layer3 = torch.nn.Linear(featureC, args.spec_channel)
 
         self.mlp = torch.nn.Sequential(layer1, torch.nn.ReLU(inplace=True), layer2, torch.nn.ReLU(inplace=True), layer3)
         torch.nn.init.constant_(self.mlp[-1].bias, 0)
@@ -92,9 +93,11 @@ class MLPRender_PE(torch.nn.Module):
         self.pospe = pospe
         layer1 = torch.nn.Linear(self.in_mlpC, featureC)
         layer2 = torch.nn.Linear(featureC, featureC)
-        layer3 = torch.nn.Linear(featureC,3)
+        layer3 = torch.nn.Linear(featureC, args.spec_channel)
 
-        self.mlp = torch.nn.Sequential(layer1, torch.nn.ReLU(inplace=True), layer2, torch.nn.ReLU(inplace=True), layer3)
+        self.mlp = torch.nn.Sequential(layer1, torch.nn.ReLU(inplace=True), 
+                                       layer2, torch.nn.ReLU(inplace=True), 
+                                       layer3)
         torch.nn.init.constant_(self.mlp[-1].bias, 0)
 
     def forward(self, pts, viewdirs, features):
@@ -118,7 +121,7 @@ class MLPRender(torch.nn.Module):
         
         layer1 = torch.nn.Linear(self.in_mlpC, featureC)
         layer2 = torch.nn.Linear(featureC, featureC)
-        layer3 = torch.nn.Linear(featureC,3)
+        layer3 = torch.nn.Linear(featureC,args.spec_channel)
 
         self.mlp = torch.nn.Sequential(layer1, torch.nn.ReLU(inplace=True), layer2, torch.nn.ReLU(inplace=True), layer3)
         torch.nn.init.constant_(self.mlp[-1].bias, 0)
@@ -133,6 +136,28 @@ class MLPRender(torch.nn.Module):
 
         return rgb
 
+class SSFFcn(torch.nn.Module):
+    def __init__(self, L, out_dim):
+        super(SSFFcn, self).__init__()
+
+        self.layers = nn.Sequential(
+            nn.Linear(in_features=2 * L + 1, out_features=2*L),
+            nn.LeakyReLU(inplace=True),
+            nn.Linear(in_features=2*L, out_features=2*L),
+            nn.LeakyReLU(inplace=True),
+            nn.Linear(in_features=2*L, out_features=2*L),
+            nn.LeakyReLU(inplace=True),
+            # nn.Linear(in_features=2*L, out_features=2*L),
+            # nn.LeakyReLU(inplace=True),
+            nn.Linear(in_features=2*L, out_features=out_dim),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+
+        y = self.layers(x)
+
+        return y
 
 
 class TensorBase(torch.nn.Module):

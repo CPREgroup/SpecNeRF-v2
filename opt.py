@@ -128,7 +128,15 @@ def config_parser(cmd=None):
                         help='N images to vis')
     parser.add_argument("--vis_every", type=int, default=10000,
                         help='frequency of visualize the image')
+    
+
+    parser.add_argument('--spec_channel', type=int, default=30)
+
+
     if cmd is not None:
         return parser.parse_args(cmd)
     else:
         return parser.parse_args()
+    
+args = config_parser()
+
