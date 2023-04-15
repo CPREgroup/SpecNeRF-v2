@@ -204,8 +204,9 @@ def reconstruction(args):
 
             # depth map and loss
             depth_est_mapped = tensorf.depth_linear(depth_supervise)
-            depth_loss = torch.mean(((depth_val_train - depth_est_mapped) ** 2) * depth_wei_train)
+            depth_loss = torch.mean((torch.abs(depth_val_train - depth_est_mapped)) * depth_wei_train)
             depth_loss_print = depth_loss.detach().item()
+            summary_writer.add_scalar('train/depth_loss', depth_loss_print, global_step=iteration)
         else:
             depth_loss = depth_loss_print = 0
 

@@ -123,6 +123,8 @@ def get_spiral(c2ws_all, near_fars, rads_scale=1.0, N_views=120):
     return np.stack(render_poses)
 
 
+image_pick4depth = [0, 6, 12, 19]
+
 class LLFFDataset(Dataset):
     def __init__(self, datadir, split='train', downsample=4, is_stack=False, hold_every=8):
         """
@@ -152,6 +154,7 @@ class LLFFDataset(Dataset):
     def read_meta(self):
         poses_bounds = np.load(os.path.join(self.root_dir, 'poses_bounds.npy'))  # (N_images, 17)
         self.image_paths = sorted(glob.glob(os.path.join(self.root_dir, 'images/*')))
+
         # load full resolution image then resize
         if self.split in ['train', 'test']:
             assert len(poses_bounds) == len(self.image_paths), \
@@ -213,6 +216,9 @@ class LLFFDataset(Dataset):
         self.all_rays = []
         self.all_rgbs = []
         for i in img_list:
+            # if i not in image_pick4depth:
+            #     continue
+
             image_path = self.image_paths[i]
             c2w = torch.FloatTensor(self.poses[i])
 
@@ -256,6 +262,8 @@ class LLFFDataset(Dataset):
 
         data_list = []
         for id_im in range(1, len(images) + 1):
+            # if id_im - 1 not in image_pick4depth:
+            #     continue
             depth_list = []
             coord_list = []
             weight_list = []
@@ -293,7 +301,8 @@ class LLFFDataset(Dataset):
         for ind, img_d in enumerate(self.depth_list):
             coord = torch.from_numpy(img_d['coord'])
             rays_o, rays_d = get_rays_by_coord_np(H, W, self.focal, self.poses[ind], coord)
-            rays_o, rays_d = ndc_rays_blender(H, W, self.focal[0], 1.0, rays_o, rays_d)
+            if args.ndc_ray == 1:
+                rays_o, rays_d = ndc_rays_blender(H, W, self.focal[0], 1.0, rays_o, rays_d)
             rayso_d = torch.cat([rays_o.float(), rays_d.float()], 1)  # (h*w, 6)
 
             data_list.append(rayso_d)

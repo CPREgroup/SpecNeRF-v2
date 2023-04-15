@@ -64,7 +64,7 @@ def get_ray_directions_blender(H, W, focal, center=None):
 
 
 def get_rays_by_coord_np(H, W, focal, c2w, coords):
-    i, j = (coords[:,0] + 0.5-W*0.5)/focal[0], -(coords[:,1] + 0.5-H*0.5)/focal[1]
+    i, j = (coords[:,0] -W*0.5)/focal[0], -(coords[:,1] -H*0.5)/focal[1]
     dirs = np.stack([i,j,-np.ones_like(i)],-1)
     rays_d = dirs @ c2w[:3, :3].T  # (H, W, 3)
     rays_o = np.broadcast_to(c2w[:3,-1], np.shape(rays_d))
