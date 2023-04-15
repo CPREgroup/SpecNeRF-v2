@@ -1,11 +1,15 @@
 
-dataset_name = nsvf
-datadir = ./data/Synthetic_NSVF/Wineholder
-expname =  tensorf_Wineholder_VM
+dataset_name = llff
+datadir = ./data/fern_2
+expname =  tensorf_Wineholder_20
 basedir = ./log
 
+# depth_supervise
+spec_channel = 3
+downsample_train = 8
+
 n_iters = 30000
-batch_size = 4096
+batch_size = 2048
 
 N_voxel_init = 2097156 # 128**3
 N_voxel_final = 27000000 # 300**3
@@ -13,12 +17,12 @@ upsamp_list = [2000,3000,4000,5500,7000]
 update_AlphaMask_list = [2000,4000]
 
 N_vis = 5
-vis_every = 10000
+vis_every = 500
 
 render_test = 1
 
-n_lamb_sigma = [16,16,16]
-n_lamb_sh = [48,48,48]
+n_lamb_sigma = [16,4,4]
+n_lamb_sh = [48,12,12]
 
 shadingMode = MLP_Fea
 fea2denseAct = softplus

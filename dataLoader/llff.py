@@ -1,3 +1,4 @@
+from pathlib import Path
 import torch
 from torch.utils.data import Dataset
 import glob
@@ -7,6 +8,9 @@ from PIL import Image
 from torchvision import transforms as T
 
 from .ray_utils import *
+from opt import args
+from colmapUtils.read_write_model import read_images_binary, read_points3d_binary
+# from colmapUtils.read_write_dense import read_points3d_binary
 
 
 def normalize(v):
@@ -146,10 +150,8 @@ class LLFFDataset(Dataset):
         self.invradius = 1.0 / (self.scene_bbox[1] - self.center).float().view(1, 1, 3)
 
     def read_meta(self):
-
-
         poses_bounds = np.load(os.path.join(self.root_dir, 'poses_bounds.npy'))  # (N_images, 17)
-        self.image_paths = sorted(glob.glob(os.path.join(self.root_dir, 'images_4/*')))
+        self.image_paths = sorted(glob.glob(os.path.join(self.root_dir, 'images/*')))
         # load full resolution image then resize
         if self.split in ['train', 'test']:
             assert len(poses_bounds) == len(self.image_paths), \
@@ -157,7 +159,10 @@ class LLFFDataset(Dataset):
 
         poses = poses_bounds[:, :15].reshape(-1, 3, 5)  # (N_images, 3, 5)
         self.near_fars = poses_bounds[:, -2:]  # (N_images, 2)
-        hwf = poses[:, :, -1]
+
+        if args.depth_supervise:
+            self.depth_list = self.load_colmap_depth(poses, self.near_fars, 
+                                                    Path(self.root_dir), self.downsample)
 
         # Step 1: rescale focal length according to training resolution
         H, W, self.focal = poses[0, :, -1]  # original intrinsics, same for all images
@@ -195,6 +200,10 @@ class LLFFDataset(Dataset):
         W, H = self.img_wh
         self.directions = get_ray_directions_blender(H, W, self.focal)  # (H, W, 3)
 
+        if args.depth_supervise:
+            self.depth_rays = self.get_depth_rays()
+            self.combine_depthimages()
+
         average_pose = average_poses(self.poses)
         dists = np.sum(np.square(average_pose[:3, 3] - self.poses[:, :3, 3]), -1)
         i_test = np.arange(0, self.poses.shape[0], self.hold_every)  # [np.argmin(dists)]
@@ -226,6 +235,88 @@ class LLFFDataset(Dataset):
         else:
             self.all_rays = torch.stack(self.all_rays, 0)   # (len(self.meta['frames]),h,w, 3)
             self.all_rgbs = torch.stack(self.all_rgbs, 0).reshape(-1,*self.img_wh[::-1], 3)  # (len(self.meta['frames]),h,w,3)
+
+
+    def load_colmap_depth(self, poses, bds_raw, basedir, factor=8, bd_factor=.75):
+        images = read_images_binary(Path(basedir) / 'sparse' / '0' / 'images.bin')
+        points = read_points3d_binary(Path(basedir) / 'sparse' / '0' / 'points3D.bin')
+
+        Errs = np.array([point3D.error for point3D in points.values()])
+        Err_mean = np.mean(Errs)
+        print("Mean Projection Error:", Err_mean)
+
+        # print(bds_raw.shape)
+        # Rescale if bd_factor is provided
+        sc = 1. if bd_factor is None else 1. / (bds_raw.min() * bd_factor)
+
+        H, W, focal = poses[0, :, -1]
+        near = np.ndarray.min(bds_raw) * .9 * sc
+        far = np.ndarray.max(bds_raw) * 1. * sc
+        print('near/far:', near, far)
+
+        data_list = []
+        for id_im in range(1, len(images) + 1):
+            depth_list = []
+            coord_list = []
+            weight_list = []
+            for i in range(len(images[id_im].xys)):
+                point2D = images[id_im].xys[i]  # w h
+                id_3D = images[id_im].point3D_ids[i]
+                if id_3D == -1:
+                    continue
+                point3D = points[id_3D].xyz
+                depth = ((-poses[id_im - 1, :3, 2]).T @ (point3D - poses[id_im - 1, :3, 3])) * sc
+                if depth < bds_raw[id_im - 1, 0] * sc or depth > bds_raw[id_im - 1, 1] * sc:
+                    continue
+                err = points[id_3D].error
+                weight = 2 * np.exp(-(err / Err_mean) ** 2)
+                depth_list.append(depth)
+                # re-position the coords relative to the crop size
+                coord_list.append(point2D / factor)
+                weight_list.append(weight)
+            if len(depth_list) > 0:
+                print(id_im, len(depth_list), np.min(depth_list), np.max(depth_list), np.mean(depth_list))
+                data_list.append(
+                    {"depth": np.array(depth_list, dtype=np.float32),
+                     "coord": np.array(coord_list, dtype=np.float32),
+                     "weight": np.array(weight_list, dtype=np.float32)})
+            else:
+                print(id_im, len(depth_list))
+        # json.dump(data_list, open(data_file, "w"))
+        return data_list
+
+
+    def get_depth_rays(self):
+        W, H = self.img_wh
+
+        data_list = []
+        for ind, img_d in enumerate(self.depth_list):
+            coord = torch.from_numpy(img_d['coord'])
+            rays_o, rays_d = get_rays_by_coord_np(H, W, self.focal, self.poses[ind], coord)
+            rays_o, rays_d = ndc_rays_blender(H, W, self.focal[0], 1.0, rays_o, rays_d)
+            rayso_d = torch.cat([rays_o.float(), rays_d.float()], 1)  # (h*w, 6)
+
+            data_list.append(rayso_d)
+        return data_list
+
+
+    def combine_depthimages(self):
+        num = len(self.depth_list)
+        depth_rays = []
+        depth_weight = []
+        depth_value = []
+
+        for i in range(num):
+            d_list = self.depth_list[i]
+            d_rays = self.depth_rays[i]
+
+            depth_rays.append(d_rays)
+            depth_weight.append(torch.from_numpy(d_list['weight'][:, np.newaxis]))
+            depth_value.append(torch.from_numpy(d_list['depth'][:, np.newaxis]))
+
+        self.depth_rays = torch.cat(depth_rays, 0)
+        self.depth_weight = torch.cat(depth_weight, 0)
+        self.depth_value = torch.cat(depth_value, 0)
 
 
     def define_transforms(self):

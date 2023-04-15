@@ -131,6 +131,7 @@ def config_parser(cmd=None):
     
 
     parser.add_argument('--spec_channel', type=int, default=30)
+    parser.add_argument('--depth_supervise', action='store_true')
 
 
     if cmd is not None:

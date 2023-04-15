@@ -8,7 +8,7 @@ from opt import config_parser, args
 import json, random
 from renderer import *
 from utils import *
-from torch.utils.tensorboard import SummaryWriter
+from tensorboardX import SummaryWriter
 import datetime
 
 from dataLoader import dataset_dict
@@ -137,7 +137,7 @@ def reconstruction(args):
                     shadingMode=args.shadingMode, alphaMask_thres=args.alpha_mask_thre, density_shift=args.density_shift, distance_scale=args.distance_scale,
                     pos_pe=args.pos_pe, view_pe=args.view_pe, fea_pe=args.fea_pe, featureC=args.featureC, step_ratio=args.step_ratio, fea2denseAct=args.fea2denseAct)
 
-
+    tensorf = tensorf.cuda()
     grad_vars = tensorf.get_optparam_groups(args.lr_init, args.lr_basis)
     if args.lr_decay_iters > 0:
         lr_factor = args.lr_decay_target_ratio**(1/args.lr_decay_iters)
@@ -148,7 +148,7 @@ def reconstruction(args):
     print("lr decay", args.lr_decay_target_ratio, args.lr_decay_iters)
     
     optimizer = torch.optim.Adam(grad_vars, betas=(0.9,0.99))
-
+    criterian = torch.nn.MSELoss()
 
     #linear in logrithmic space
     N_voxel_list = (torch.round(torch.exp(torch.linspace(np.log(args.N_voxel_init), np.log(args.N_voxel_final), len(upsamp_list)+1))).long()).tolist()[1:]
@@ -158,9 +158,15 @@ def reconstruction(args):
     PSNRs,PSNRs_test = [],[0]
 
     allrays, allrgbs = train_dataset.all_rays, train_dataset.all_rgbs
+    
     if not args.ndc_ray:
         allrays, allrgbs = tensorf.filtering_rays(allrays, allrgbs, bbox_only=True)
     trainingSampler = SimpleSampler(allrays.shape[0], args.batch_size)
+
+    if args.depth_supervise:
+        depthrays, depthweights, depthvalue = \
+            train_dataset.depth_rays, train_dataset.depth_weight, train_dataset.depth_value
+        depthSampler = SimpleSampler(depthrays.shape[0], 1024)
 
     Ortho_reg_weight = args.Ortho_weight
     print("initial Ortho_reg_weight", Ortho_reg_weight)
@@ -179,15 +185,37 @@ def reconstruction(args):
         ray_idx = trainingSampler.nextids()
         rays_train, rgb_train = allrays[ray_idx], allrgbs[ray_idx].to(device)
 
+        if args.depth_supervise:
+            depth_rays_idx = depthSampler.nextids()
+            depth_rays_train, depth_wei_train, depth_val_train = \
+                depthrays[depth_rays_idx], depthweights[depth_rays_idx].to(device), depthvalue[depth_rays_idx].to(device)
+
+            # cat
+            rays_train = torch.cat([rays_train, depth_rays_train])
+
         #rgb_map, alphas_map, depth_map, weights, uncertainty
         rgb_map, alphas_map, depth_map, weights, uncertainty = renderer(rays_train, tensorf, chunk=args.batch_size,
                                 N_samples=nSamples, white_bg = white_bg, ndc_ray=ndc_ray, device=device, is_train=True)
 
-        loss = torch.mean((rgb_map - rgb_train) ** 2)
+        if args.depth_supervise:
+            # disentangle
+            rgb_map = rgb_map[:args.batch_size]
+            depth_map, depth_supervise = depth_map[:args.batch_size], depth_map[args.batch_size:]
+
+            # depth map and loss
+            depth_est_mapped = tensorf.depth_linear(depth_supervise)
+            depth_loss = torch.mean(((depth_val_train - depth_est_mapped) ** 2) * depth_wei_train)
+            depth_loss_print = depth_loss.detach().item()
+        else:
+            depth_loss = depth_loss_print = 0
+
+        loss = criterian(rgb_map, rgb_train)
+        psnrloss = loss.detach().item() # temp
 
 
         # loss
-        total_loss = loss
+        total_loss = loss + depth_loss
+
         if Ortho_reg_weight > 0:
             loss_reg = tensorf.vector_comp_diffs()
             total_loss += Ortho_reg_weight*loss_reg
@@ -211,12 +239,10 @@ def reconstruction(args):
         optimizer.zero_grad()
         total_loss.backward()
         optimizer.step()
-
-        loss = loss.detach().item()
         
-        PSNRs.append(-10.0 * np.log(loss) / np.log(10.0))
+        PSNRs.append(-10.0 * np.log(psnrloss) / np.log(10.0))
         summary_writer.add_scalar('train/PSNR', PSNRs[-1], global_step=iteration)
-        summary_writer.add_scalar('train/mse', loss, global_step=iteration)
+        summary_writer.add_scalar('train/mse', psnrloss, global_step=iteration)
 
 
         for param_group in optimizer.param_groups:
@@ -228,7 +254,8 @@ def reconstruction(args):
                 f'Iteration {iteration:05d}:'
                 + f' train_psnr = {float(np.mean(PSNRs)):.2f}'
                 + f' test_psnr = {float(np.mean(PSNRs_test)):.2f}'
-                + f' mse = {loss:.6f}'
+                + f' mse = {psnrloss:.6f}'
+                + f' depth_loss = {depth_loss_print:.6f}'
             )
             PSNRs = []
 

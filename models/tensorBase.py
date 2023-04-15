@@ -159,6 +159,17 @@ class SSFFcn(torch.nn.Module):
 
         return y
 
+class Depth_linear(torch.nn.Module):
+    def __init__(self):
+        super(Depth_linear, self).__init__()
+        self.a = nn.Parameter(torch.FloatTensor([7]))
+        self.b = nn.Parameter(torch.FloatTensor([0.1]))
+
+    def forward(self, depth_est):
+        # if self.a == -1:
+        #     self.a.data = torch.FloatTensor([SPECLLFFDataset.mean_depth])
+        return self.a * depth_est + self.b
+
 
 class TensorBase(torch.nn.Module):
     def __init__(self, aabb, gridSize, device, density_n_comp = 8, appearance_n_comp = 24, app_dim = 27,
@@ -196,6 +207,9 @@ class TensorBase(torch.nn.Module):
 
         self.shadingMode, self.pos_pe, self.view_pe, self.fea_pe, self.featureC = shadingMode, pos_pe, view_pe, fea_pe, featureC
         self.init_render_func(shadingMode, pos_pe, view_pe, fea_pe, featureC, device)
+        
+        self.depth_linear = Depth_linear().to(device)
+
 
     def init_render_func(self, shadingMode, pos_pe, view_pe, fea_pe, featureC, device):
         if shadingMode == 'MLP_PE':
@@ -483,9 +497,9 @@ class TensorBase(torch.nn.Module):
         
         rgb_map = rgb_map.clamp(0,1)
 
-        with torch.no_grad():
-            depth_map = torch.sum(weight * z_vals, -1)
-            depth_map = depth_map + (1. - acc_map) * rays_chunk[..., -1]
+        # with torch.no_grad():
+        depth_map = torch.sum(weight * z_vals, -1)
+        # depth_map = depth_map + (1. - acc_map) * rays_chunk[..., -1]
 
         return rgb_map, depth_map # rgb, sigma, alpha, weight, bg_weight
 
