@@ -251,6 +251,8 @@ def reconstruction(args):
 
         # Print the current values of the losses.
         if iteration % args.progress_refresh_rate == 0:
+            print('\ndepth linear para (a, b) is', tensorf.depth_linear.a, tensorf.depth_linear.b, '\n')
+
             pbar.set_description(
                 f'Iteration {iteration:05d}:'
                 + f' train_psnr = {float(np.mean(PSNRs)):.2f}'
