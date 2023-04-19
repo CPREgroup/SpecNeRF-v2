@@ -129,9 +129,14 @@ def config_parser(cmd=None):
     parser.add_argument("--vis_every", type=int, default=10000,
                         help='frequency of visualize the image')
     
-
+    parser.add_argument('--angles',type=int,default=10)
+    parser.add_argument('--filters',type=int,default=20)
+    parser.add_argument('--img_dir_name',type=str,default='pose??img')
     parser.add_argument('--spec_channel', type=int, default=30)
     parser.add_argument('--depth_supervise', action='store_true')
+    parser.add_argument('--sample_matrix_dir',type=str,default='null')
+    parser.add_argument('--img_ext',type=str,default='dng')
+
 
 
     if cmd is not None:

@@ -1,4 +1,5 @@
 from pathlib import Path
+import traceback
 import torch
 from torch.utils.data import Dataset
 import glob
@@ -6,11 +7,13 @@ import numpy as np
 import os
 from PIL import Image
 from torchvision import transforms as T
-
+import rawpy
+from rawpy._rawpy import ColorSpace
 from .ray_utils import *
 from opt import args
 from colmapUtils.read_write_model import read_images_binary, read_points3d_binary
 # from colmapUtils.read_write_dense import read_points3d_binary
+import scipy.io as sio
 
 
 def normalize(v):
@@ -123,9 +126,19 @@ def get_spiral(c2ws_all, near_fars, rads_scale=1.0, N_views=120):
     return np.stack(render_poses)
 
 
+def _find_test_sample(mtx):
+    zero_inds = np.argwhere(mtx == 0)
+    choose_zero_inds = zero_inds[:3].tolist()
+
+    sample_mtx = np.zeros_like(mtx)
+    for idx in choose_zero_inds:
+        sample_mtx[tuple(idx)] = 1
+
+    return sample_mtx
+
 image_pick4depth = [0, 6, 12, 19]
 
-class LLFFDataset(Dataset):
+class LLFFDataset:
     def __init__(self, datadir, split='train', downsample=4, is_stack=False, hold_every=8):
         """
         spheric_poses: whether the images are taken in a spheric inward-facing manner
@@ -138,10 +151,10 @@ class LLFFDataset(Dataset):
         self.hold_every = hold_every
         self.is_stack = is_stack
         self.downsample = downsample
-        self.define_transforms()
 
         self.blender2opencv = np.eye(4)#np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
-        self.read_meta()
+        self.read_meta() # read poses, also for depth data and rays
+        self.load_img() # read images and form rays
         self.white_bg = False
 
         #         self.near_far = [np.min(self.near_fars[:,0]),np.max(self.near_fars[:,1])]
@@ -153,12 +166,11 @@ class LLFFDataset(Dataset):
 
     def read_meta(self):
         poses_bounds = np.load(os.path.join(self.root_dir, 'poses_bounds.npy'))  # (N_images, 17)
-        self.image_paths = sorted(glob.glob(os.path.join(self.root_dir, 'images/*')))
 
         # load full resolution image then resize
         if self.split in ['train', 'test']:
-            assert len(poses_bounds) == len(self.image_paths), \
-                'Mismatch between number of images and number of poses! Please rerun COLMAP!'
+            assert len(poses_bounds) == args.angles, \
+                'Mismatch between number of args.angles and number of poses! Please rerun COLMAP!'
 
         poses = poses_bounds[:, :15].reshape(-1, 3, 5)  # (N_images, 3, 5)
         self.near_fars = poses_bounds[:, -2:]  # (N_images, 2)
@@ -209,37 +221,60 @@ class LLFFDataset(Dataset):
 
         average_pose = average_poses(self.poses)
         dists = np.sum(np.square(average_pose[:3, 3] - self.poses[:, :3, 3]), -1)
-        i_test = np.arange(0, self.poses.shape[0], self.hold_every)  # [np.argmin(dists)]
-        img_list = i_test if self.split != 'train' else list(set(np.arange(len(self.poses))) - set(i_test))
 
+
+    def load_img(self):
+        rays_savePath = Path(args.datadir) / f"rays_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
+        folders = [Path(args.datadir) / args.img_dir_name.replace('??', str(i)) 
+                   for i in range(args.angles)]
+        self.training_matrix = sio.loadmat(args.sample_matrix_dir)['mask']
+        sample_matrix = self.training_matrix if self.split == 'train' else _find_test_sample(self.training_matrix)
+        print(f'{sample_matrix.sum()} of images are loading...')
+
+        W, H = self.img_wh
+        tensor_resizer = T.Resize([H, W], antialias=True)
         # use first N_images-1 to train, the LAST is val
-        self.all_rays = []
-        self.all_rgbs = []
-        for i in img_list:
-            # if i not in image_pick4depth:
-            #     continue
+        if os.path.exists(rays_savePath):
+            data = torch.load(rays_savePath)
+            self.all_rays = data['rays']
+            self.all_rgbs = data['rgbs']
+        else:
+            self.all_rays = []
+            self.all_rgbs = []
+            for r, row in enumerate(sample_matrix):
+                image_paths = sorted(glob.glob(str(folders[r] / f"images/*{args.img_ext}")))
+                for c, aimEle in enumerate(row):
+                    if aimEle != 1:
+                        continue
+                    # if i not in image_pick4depth:
+                    #     continue
 
-            image_path = self.image_paths[i]
-            c2w = torch.FloatTensor(self.poses[i])
+                    image_path = image_paths[c]
+                    c2w = torch.FloatTensor(self.poses[r])
 
-            img = Image.open(image_path).convert('RGB')
-            if self.downsample != 1.0:
-                img = img.resize(self.img_wh, Image.LANCZOS)
-            img = self.transform(img)  # (3, h, w)
+                    img = self.read_non_raw(image_path)   # c h w [0-1]
+                    if self.downsample != 1.0:
+                        img = tensor_resizer(img)
 
-            img = img.view(3, -1).permute(1, 0)  # (h*w, 3) RGB
-            self.all_rgbs += [img]
-            rays_o, rays_d = get_rays(self.directions, c2w)  # both (h*w, 3)
-            rays_o, rays_d = ndc_rays_blender(H, W, self.focal[0], 1.0, rays_o, rays_d)
-            # viewdir = rays_d / torch.norm(rays_d, dim=-1, keepdim=True)
+                    img = img.view(3, -1).permute(1, 0)  # (h*w, 3) RGB
+                    self.all_rgbs.append(img)
 
-            self.all_rays += [torch.cat([rays_o, rays_d], 1)]  # (h*w, 6)
+                    rays_o, rays_d = get_rays(self.directions, c2w)  # both (h*w, 3)
+                    rays_o, rays_d = ndc_rays_blender(H, W, self.focal[0], 1.0, rays_o, rays_d)
+                    # viewdir = rays_d / torch.norm(rays_d, dim=-1, keepdim=True)
+                    self.all_rays.append(torch.cat([rays_o, rays_d], 1))  # (h*w, 6)
+
+            torch.save({
+                'rgbs': self.all_rgbs,
+                'rays': self.all_rays
+            }, rays_savePath)
+        print(f'{len(self.all_rgbs)} of images are loaded!')
 
         if not self.is_stack:
             self.all_rays = torch.cat(self.all_rays, 0) # (len(self.meta['frames])*h*w, 3)
             self.all_rgbs = torch.cat(self.all_rgbs, 0) # (len(self.meta['frames])*h*w,3)
         else:
-            self.all_rays = torch.stack(self.all_rays, 0)   # (len(self.meta['frames]),h,w, 3)
+            self.all_rays = torch.stack(self.all_rays, 0)   # (len(self.meta['frames]),h*w, 3)
             self.all_rgbs = torch.stack(self.all_rgbs, 0).reshape(-1,*self.img_wh[::-1], 3)  # (len(self.meta['frames]),h,w,3)
 
 
@@ -327,16 +362,23 @@ class LLFFDataset(Dataset):
         self.depth_weight = torch.cat(depth_weight, 0)
         self.depth_value = torch.cat(depth_value, 0)
 
+    def read_non_raw(self, image_path):
+        is_raw = image_path.endswith('.dng')
+        if is_raw:
+            try:
+                with rawpy.imread(image_path) as raw:
+                    rgb = raw.postprocess(user_wb=(1, 1, 1, 1), output_color=ColorSpace.raw,
+                                          no_auto_bright=True, output_bps=16, gamma=(1, 1))
+            except:
+                print(traceback.format_exc())
+            img = self.transform(rgb)   # c h w [0~2^16]
+        else:
+            img = Image.open(image_path).convert('RGB')
+            img = self.transform(img, 255.)   # c h w [0-1]
 
-    def define_transforms(self):
-        self.transform = T.ToTensor()
+        return img
 
-    def __len__(self):
-        return len(self.all_rgbs)
 
-    def __getitem__(self, idx):
+    def transform(self, img, maxbits_num=65535.):
+        return torch.FloatTensor(img / maxbits_num).permute(2, 0, 1)
 
-        sample = {'rays': self.all_rays[idx],
-                  'rgbs': self.all_rgbs[idx]}
-
-        return sample
