@@ -14,26 +14,38 @@ from rawpy._rawpy import ColorSpace
 import scipy.io as sio
 import os
 import numpy as np
-white = sio.loadmat('./myspecdata/decorner/meanwhite.mat')['data'] ** (1 / 2.4)
-black = sio.loadmat('./myspecdata/decorner/meanblack.mat')['data']
-folder = r'myspecdata\filter20_no1\holiday\filter3img\images'
-files = os.scandir(folder)
+# white = sio.loadmat('./myspecdata/decorner/meanwhite.mat')['data'] ** (1 / 2.4)
+# black = sio.loadmat('./myspecdata/decorner/meanblack.mat')['data']
+# folder = r'myspecdata\filter20_no1\holiday\filter3img\images'
+# files = os.scandir(folder)
 
 
-aimfolder = r'myspecdata\filter20_no1\holiday\images'
-if not os.path.exists(aimfolder):
-    os.mkdir(aimfolder)
+# aimfolder = r'myspecdata\filter20_no1\holiday\images'
+# if not os.path.exists(aimfolder):
+#     os.mkdir(aimfolder)
 
-for f in files:
-    with rawpy.imread(f.path) as raw:
-        rgb = raw.postprocess(output_color=ColorSpace.sRGB) / 255.0
-        rgb = np.minimum(np.maximum(rgb - 0.014, 0.0) / white[..., np.newaxis], 1)
+# for f in files:
+#     with rawpy.imread(f.path) as raw:
+#         rgb = raw.postprocess(output_color=ColorSpace.sRGB) / 255.0
+#         rgb = np.minimum(np.maximum(rgb - 0.014, 0.0) / white[..., np.newaxis], 1)
 
-        rgb *= 255.0
-        rgb = rgb.astype(np.uint8)
-        rgb = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+#         rgb *= 255.0
+#         rgb = rgb.astype(np.uint8)
+#         rgb = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
 
-        aimfile = f'{aimfolder}\\{f.name[:-4]}.jpg'
-        cv2.imwrite(aimfile, rgb)
+#         aimfile = f'{aimfolder}\\{f.name[:-4]}.jpg'
+#         cv2.imwrite(aimfile, rgb)
 
-        print('saved ', aimfile)
+#         print('saved ', aimfile)
+
+# rand = np.random.random([12, 20])
+# rand[rand < 0.85] = 0
+# rand[rand >= 0.85] = 1
+
+# sio.savemat('./find_filter/find_filter_res/smallfake.mat', 
+#             {'mask': rand})
+
+a = np.zeros([3,3])
+id = tuple(np.array([[1,1], [1,2]]).tolist())
+a[id] = 1
+print(a)

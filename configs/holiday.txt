@@ -3,9 +3,13 @@ dataset_name = llff
 datadir = ./myspecdata/filter20_no1/holiday
 expname =  tensorf_holiday_softplus
 basedir = ./log
+angles = 12
+filters = 20
+img_dir_name = pose??img
+sample_matrix_dir = ./find_filter/find_filter_res/smallfake.mat #GA_132_ep402_6.168_holiday.mat #GA_40_ep336_2.350_holiday.mat #GA_132_ep402_6.168_holiday.mat
 
 ndc_ray = 0
-depth_supervise
+# depth_supervise
 spec_channel = 3
 downsample_train = 8
 
