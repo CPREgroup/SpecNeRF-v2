@@ -227,7 +227,8 @@ class LLFFDataset:
         rays_savePath = Path(args.datadir) / f"rays_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
         folders = [Path(args.datadir) / args.img_dir_name.replace('??', str(i)) 
                    for i in range(args.angles)]
-        self.training_matrix = sio.loadmat(args.sample_matrix_dir)['mask']
+        self.training_matrix = np.hstack((np.array([1] * args.angles)[:, np.newaxis], 
+                                          sio.loadmat(args.sample_matrix_dir)['mask']))
         sample_matrix = self.training_matrix if self.split == 'train' else _find_test_sample(self.training_matrix)
         print(f'{sample_matrix.sum()} of images are loading...')
 
