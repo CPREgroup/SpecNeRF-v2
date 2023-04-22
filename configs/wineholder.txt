@@ -1,11 +1,12 @@
 
 dataset_name = llff
 datadir = ./data/fern_2
-expname =  tensorf_Wineholder_depth
+expname =  tensorf_Wineholder_distloss_noNDC
 basedir = ./log
 
 ndc_ray = 0
-depth_supervise
+# depth_supervise
+distortion_loss
 spec_channel = 3
 downsample_train = 8
 
@@ -26,7 +27,8 @@ n_lamb_sigma = [16,4,4]
 n_lamb_sh = [48,12,12]
 
 shadingMode = MLP_Fea
-fea2denseAct = softplus
+fea2denseAct = relu
+featureC = 64
 
 view_pe = 2
 fea_pe = 2

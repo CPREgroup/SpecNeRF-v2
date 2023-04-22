@@ -4,7 +4,7 @@ datadir = ./myspecdata/filter20_no1/holiday
 expname =  tensorf_holiday_softplus
 basedir = ./log
 
-ndc_ray = 0
+ndc_ray = 1
 depth_supervise
 spec_channel = 3
 downsample_train = 8

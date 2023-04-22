@@ -5,7 +5,8 @@ from .sh import eval_sh_bases
 import numpy as np
 import time
 from opt import args
-
+from torch_efficient_distloss import eff_distloss, eff_distloss_native, flatten_eff_distloss
+from utils import norm0to1
 
 def positional_encoding(positions, freqs):
     
@@ -451,6 +452,8 @@ class TensorBase(torch.nn.Module):
         viewdirs = rays_chunk[:, 3:6]
         if ndc_ray:
             xyz_sampled, z_vals, ray_valid = self.sample_ray_ndc(rays_chunk[:, :3], viewdirs, is_train=is_train,N_samples=N_samples)
+            # shape of vals above:
+            # (bs, sampleNum, 3), (1, sampleNum), (bs, sampleNum), (1, sampleNum)
             dists = torch.cat((z_vals[:, 1:] - z_vals[:, :-1], torch.zeros_like(z_vals[:, :1])), dim=-1)
             rays_norm = torch.norm(viewdirs, dim=-1, keepdim=True)
             dists = dists * rays_norm
@@ -458,6 +461,7 @@ class TensorBase(torch.nn.Module):
         else:
             xyz_sampled, z_vals, ray_valid = self.sample_ray(rays_chunk[:, :3], viewdirs, is_train=is_train,N_samples=N_samples)
             dists = torch.cat((z_vals[:, 1:] - z_vals[:, :-1], torch.zeros_like(z_vals[:, :1])), dim=-1)
+
         viewdirs = viewdirs.view(-1, 1, 3).expand(xyz_sampled.shape)
         
         if self.alphaMask is not None:
@@ -477,6 +481,17 @@ class TensorBase(torch.nn.Module):
 
             validsigma = self.feature2density(sigma_feature)
             sigma[ray_valid] = validsigma
+
+            if args.distortion_loss:
+                # calculate distortion loss
+                z_vals_norm = norm0to1(z_vals)
+                w = sigma / sigma.sum(-1, keepdim=True)
+                m = (z_vals_norm[:, 1:] + z_vals_norm[:, :-1]) * 0.5
+                if args.ndc_ray == 1:
+                    m = m.repeat(xyz_sampled.shape[0],1)
+                dist_loss = eff_distloss_native(w[..., :-1], m, dists[..., :-1]).reshape([1,])
+            else:
+                dist_loss = torch.FloatTensor([0])
 
 
         alpha, weight, bg_weight = raw2alpha(sigma, dists * self.distance_scale)
@@ -501,5 +516,5 @@ class TensorBase(torch.nn.Module):
         depth_map = torch.sum(weight * z_vals, -1)
         # depth_map = depth_map + (1. - acc_map) * rays_chunk[..., -1]
 
-        return rgb_map, depth_map # rgb, sigma, alpha, weight, bg_weight
+        return rgb_map, depth_map, dist_loss # rgb, sigma, alpha, weight, bg_weight
 
