@@ -228,7 +228,7 @@ class LLFFDataset:
         folders = [Path(args.datadir) / args.img_dir_name.replace('??', str(i)) 
                    for i in range(args.angles)]
         self.training_matrix = np.hstack((np.array([1] * args.angles)[:, np.newaxis], 
-                                          sio.loadmat(args.sample_matrix_dir)['mask']))
+                                          sio.loadmat(args.sample_matrix_dir)['mask'])) # first column is rgb image, which is needed
         sample_matrix = self.training_matrix if self.split == 'train' else _find_test_sample(self.training_matrix)
         print(f'{sample_matrix.sum()} of images are loading...')
 
