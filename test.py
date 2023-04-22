@@ -38,14 +38,26 @@ import numpy as np
 
 #         print('saved ', aimfile)
 
-# rand = np.random.random([12, 20])
-# rand[rand < 0.85] = 0
-# rand[rand >= 0.85] = 1
 
-# sio.savemat('./find_filter/find_filter_res/smallfake.mat', 
-#             {'mask': rand})
+import torch
+from torch_efficient_distloss import eff_distloss, eff_distloss_native, flatten_eff_distloss
 
-a = np.zeros([3,3])
-id = tuple(np.array([[1,1], [1,2]]).tolist())
-a[id] = 1
-print(a)
+# A toy example
+B = 8192  # number of rays
+N = 128   # number of points on a ray
+w = torch.rand(B, N).cuda()
+w = w / w.sum(-1, keepdim=True)
+w = w.clone().requires_grad_()
+s = torch.linspace(0, 1, N+1).cuda()
+m = (s[1:] + s[:-1]) * 0.5
+m = m[None].repeat(B,1)
+interval = 1/N
+
+loss = 0.01 * eff_distloss(w, m, interval)
+loss.backward()
+print('Loss', loss)
+print('Gradient', w.grad)
+
+a = torch.FloatTensor([[1,2],[3,4]])
+print(torch.softmax(a, 1))
+print(a / a.sum(-1, keepdim=True))

@@ -1,1 +1,1 @@
-python train.py --config configs\holiday.txt
+python train.py --config configs\wineholder.txt

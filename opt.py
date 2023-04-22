@@ -136,7 +136,7 @@ def config_parser(cmd=None):
     parser.add_argument('--depth_supervise', action='store_true')
     parser.add_argument('--sample_matrix_dir',type=str,default='null')
     parser.add_argument('--img_ext',type=str,default='dng')
-
+    parser.add_argument('--distortion_loss', action='store_true')
 
 
     if cmd is not None:

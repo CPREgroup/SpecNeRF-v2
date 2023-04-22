@@ -8,6 +8,13 @@ import scipy.signal
 mse2psnr = lambda x : -10. * torch.log(x) / torch.log(torch.Tensor([10.]))
 
 
+def norm0to1(x):
+    xmin, _ = x.min(dim=1, keepdim=True)
+    xmax, _ = x.max(dim=1, keepdim=True)
+    x_norm = (x - xmin) / (xmax - xmin)
+
+    return x_norm
+
 def visualize_depth_numpy(depth, minmax=None, cmap=cv2.COLORMAP_JET):
     """
     depth: (H, W)

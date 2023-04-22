@@ -15,7 +15,6 @@ from dataLoader import dataset_dict
 import sys
 
 
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 renderer = OctreeRender_trilinear_fast
@@ -194,7 +193,7 @@ def reconstruction(args):
             rays_train = torch.cat([rays_train, depth_rays_train])
 
         #rgb_map, alphas_map, depth_map, weights, uncertainty
-        rgb_map, alphas_map, depth_map, weights, uncertainty = renderer(rays_train, tensorf, chunk=args.batch_size,
+        rgb_map, alphas_map, depth_map, weights, uncertainty, dist_loss = renderer(rays_train, tensorf, chunk=args.batch_size,
                                 N_samples=nSamples, white_bg = white_bg, ndc_ray=ndc_ray, device=device, is_train=True)
 
         if args.depth_supervise:
@@ -210,12 +209,17 @@ def reconstruction(args):
         else:
             depth_loss = depth_loss_print = 0
 
+        if args.distortion_loss:
+            dist_loss = 0.01 * dist_loss
+            summary_writer.add_scalar('train/dist_loss', dist_loss, global_step=iteration)
+
+
         loss = criterian(rgb_map, rgb_train)
         psnrloss = loss.detach().item() # temp
 
 
         # loss
-        total_loss = loss + depth_loss
+        total_loss = loss + depth_loss + dist_loss
 
         if Ortho_reg_weight > 0:
             loss_reg = tensorf.vector_comp_diffs()
@@ -251,7 +255,7 @@ def reconstruction(args):
 
         # Print the current values of the losses.
         if iteration % args.progress_refresh_rate == 0:
-            print('\ndepth linear para (a, b) is', tensorf.depth_linear.a, tensorf.depth_linear.b, '\n')
+            # print('\ndepth linear para (a, b) is', tensorf.depth_linear.a, tensorf.depth_linear.b, '\n')
 
             pbar.set_description(
                 f'Iteration {iteration:05d}:'
@@ -259,6 +263,7 @@ def reconstruction(args):
                 + f' test_psnr = {float(np.mean(PSNRs_test)):.2f}'
                 + f' mse = {psnrloss:.6f}'
                 + f' depth_loss = {depth_loss_print:.6f}'
+                + f' dist_loss = {dist_loss:.6f}'
             )
             PSNRs = []
 
