@@ -4,7 +4,7 @@ from tqdm.auto import tqdm
 from opt import config_parser, args
 
 
-
+import scipy.io as sio
 import json, random
 from renderer import *
 from utils import *
@@ -19,6 +19,21 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 renderer = OctreeRender_trilinear_fast
 
+lastfilename = 'null'
+def saveModel(model, filepath):
+    global lastfilename
+    try:
+        model.save(filepath)
+    except Exception as e:
+        print(traceback.format_exc())
+        lastfilename = filepath
+        return
+
+    # code runs to here, only when the saving was successful
+    # clear last 10 round model
+    if os.path.exists(lastfilename):
+        os.remove(lastfilename)
+    lastfilename = filepath
 
 class SimpleSampler:
     def __init__(self, total, batch):
@@ -113,6 +128,7 @@ def reconstruction(args):
     os.makedirs(f'{logfolder}/imgs_vis', exist_ok=True)
     os.makedirs(f'{logfolder}/imgs_rgba', exist_ok=True)
     os.makedirs(f'{logfolder}/rgba', exist_ok=True)
+    os.makedirs(f'{logfolder}/SSFs', exist_ok=True)
     summary_writer = SummaryWriter(logfolder)
 
 
@@ -270,6 +286,10 @@ def reconstruction(args):
 
 
         if iteration % args.vis_every == args.vis_every - 1 and args.N_vis!=0:
+            saveModel(tensorf, f'{logfolder}/{iteration}_{args.expname}.pth')
+            sio.savemat(f'{logfolder}/SSFs/ssf_{iteration}.mat',
+                        {'ssf': tensorf.ssffcn(tensorf.input_1D).cpu().detach().numpy()})
+
             PSNRs_test = evaluation(test_dataset,tensorf, args, renderer, f'{logfolder}/imgs_vis/', N_vis=args.N_vis,
                                     prtx=f'{iteration:06d}_', N_samples=nSamples, white_bg = white_bg, ndc_ray=ndc_ray, compute_extra_metrics=False)
             summary_writer.add_scalar('test/psnr', np.mean(PSNRs_test), global_step=iteration)

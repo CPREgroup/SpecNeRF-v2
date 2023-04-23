@@ -26,7 +26,7 @@ upsamp_list = [2000,3000,4000,5500,7000]
 update_AlphaMask_list = [2000,4000]
 
 N_vis = -1
-vis_every = 5
+vis_every = 500
 
 render_test = 1
 

@@ -127,8 +127,11 @@ def get_spiral(c2ws_all, near_fars, rads_scale=1.0, N_views=120):
 
 
 def _find_test_sample(mtx):
-    zero_inds = np.argwhere(mtx == 0)
-    choose_zero_inds = zero_inds[:3].tolist()
+    # mtxcp = mtx[...]
+    # mtxcp[:, 0] = 0
+    # zero_inds = np.argwhere(mtxcp == 0)
+    # choose_zero_inds = np.random.choice(zero_inds, (5, )).tolist()
+    choose_zero_inds = [[0, 0], [5, 0], [11, 0]]
 
     sample_mtx = np.zeros_like(mtx)
     for idx in choose_zero_inds:
@@ -275,7 +278,7 @@ class LLFFDataset:
                     c2w = torch.FloatTensor(self.poses[r])
 
                     img = self.read_non_raw(image_path)   # c h w [0-1]
-                    if self.args.lsc:
+                    if args.lsc:
                         img = LLFFDataset.img_correction(img)   # lens shade correction & black level correction
 
                     if self.downsample != 1.0:
