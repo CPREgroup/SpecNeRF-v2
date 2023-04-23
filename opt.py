@@ -24,6 +24,7 @@ def config_parser(cmd=None):
 
     # loader options
     parser.add_argument("--batch_size", type=int, default=4096)
+    parser.add_argument("--chunk_size", type=int, default=2048, help='the size of putting into the gpu')
     parser.add_argument("--n_iters", type=int, default=30000)
 
     parser.add_argument('--dataset_name', type=str, default='blender',
@@ -137,6 +138,8 @@ def config_parser(cmd=None):
     parser.add_argument('--sample_matrix_dir',type=str,default='null')
     parser.add_argument('--img_ext',type=str,default='dng')
     parser.add_argument('--distortion_loss', action='store_true')
+    parser.add_argument('--band_start_idx',type=int,default=3)
+    parser.add_argument('--lsc', action='store_true')
 
 
     if cmd is not None:

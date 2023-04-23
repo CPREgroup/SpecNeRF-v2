@@ -10,7 +10,7 @@ from renderer import *
 from utils import *
 from tensorboardX import SummaryWriter
 import datetime
-
+from dataLoader.llff import LLFFDataset
 from dataLoader import dataset_dict
 import sys
 
@@ -89,8 +89,8 @@ def reconstruction(args):
 
     # init dataset
     dataset = dataset_dict[args.dataset_name]
-    train_dataset = dataset(args.datadir, split='train', downsample=args.downsample_train, is_stack=False)
-    test_dataset = dataset(args.datadir, split='test', downsample=args.downsample_train, is_stack=True)
+    train_dataset: LLFFDataset = dataset(args.datadir, split='train', downsample=args.downsample_train, is_stack=False)
+    test_dataset: LLFFDataset = dataset(args.datadir, split='test', downsample=args.downsample_train, is_stack=True)
     white_bg = train_dataset.white_bg
     near_far = train_dataset.near_far
     ndc_ray = args.ndc_ray
@@ -156,10 +156,11 @@ def reconstruction(args):
     torch.cuda.empty_cache()
     PSNRs,PSNRs_test = [],[0]
 
-    allrays, allrgbs = train_dataset.all_rays, train_dataset.all_rgbs
+    allrays, allrgbs, allposesID, all_filterID = train_dataset.all_rays, train_dataset.all_rgbs, train_dataset.all_poses, train_dataset.all_filtersIdx
     
     if not args.ndc_ray:
-        allrays, allrgbs = tensorf.filtering_rays(allrays, allrgbs, bbox_only=True)
+        allrays, allrgbs, mask_filtered = tensorf.filtering_rays(allrays, allrgbs, bbox_only=True)
+        allposesID, all_filterID = allposesID[mask_filtered], all_filterID[mask_filtered]
     trainingSampler = SimpleSampler(allrays.shape[0], args.batch_size)
 
     if args.depth_supervise:
@@ -182,19 +183,19 @@ def reconstruction(args):
 
 
         ray_idx = trainingSampler.nextids()
-        rays_train, rgb_train = allrays[ray_idx], allrgbs[ray_idx].to(device)
+        rays_train, rgb_train, poseID_train, filterID_train = allrays[ray_idx], allrgbs[ray_idx].to(device), allposesID[ray_idx], all_filterID[ray_idx]
 
         if args.depth_supervise:
             depth_rays_idx = depthSampler.nextids()
             depth_rays_train, depth_wei_train, depth_val_train = \
                 depthrays[depth_rays_idx], depthweights[depth_rays_idx].to(device), depthvalue[depth_rays_idx].to(device)
 
-            # cat
             rays_train = torch.cat([rays_train, depth_rays_train])
 
         #rgb_map, alphas_map, depth_map, weights, uncertainty
-        rgb_map, alphas_map, depth_map, weights, uncertainty, dist_loss = renderer(rays_train, tensorf, chunk=args.batch_size,
-                                N_samples=nSamples, white_bg = white_bg, ndc_ray=ndc_ray, device=device, is_train=True)
+        rgb_map, alphas_map, depth_map, weights, uncertainty, dist_loss, spec_map = \
+            renderer(rays_train, tensorf, N_samples=nSamples, white_bg = white_bg, ndc_ray=ndc_ray, device=device, \
+                     is_train=True, poseids=poseID_train, filterids=filterID_train)
 
         if args.depth_supervise:
             # disentangle
@@ -289,7 +290,8 @@ def reconstruction(args):
 
             if not args.ndc_ray and iteration == update_AlphaMask_list[1]:
                 # filter rays outside the bbox
-                allrays,allrgbs = tensorf.filtering_rays(allrays,allrgbs)
+                allrays, allrgbs, mask_filtered = tensorf.filtering_rays(allrays,allrgbs)
+                allposesID, all_filterID = allposesID[mask_filtered], all_filterID[mask_filtered]
                 trainingSampler = SimpleSampler(allrgbs.shape[0], args.batch_size)
 
 

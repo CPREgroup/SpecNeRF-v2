@@ -1,7 +1,7 @@
 
 dataset_name = llff
 datadir = ./myspecdata/filter20_no1/holiday
-expname =  tensorf_holiday
+expname =  tensorf_holiday_spec28
 basedir = ./log
 angles = 12
 filters = 20
@@ -10,20 +10,23 @@ sample_matrix_dir = ./find_filter/find_filter_res/smallfake.mat #GA_132_ep402_6.
 
 ndc_ray = 0
 # depth_supervise
-distortion_loss
-spec_channel = 3
+# distortion_loss
+lsc
+spec_channel = 28
+# band_start_idx = 3
 downsample_train = 8
 
 n_iters = 30000
-batch_size = 2048
+batch_size = 4096
+chunk_size = 2048
 
 N_voxel_init = 2097156 # 128**3
 N_voxel_final = 27000000 # 300**3
 upsamp_list = [2000,3000,4000,5500,7000]
 update_AlphaMask_list = [2000,4000]
 
-N_vis = 5
-vis_every = 500
+N_vis = -1
+vis_every = 5
 
 render_test = 1
 

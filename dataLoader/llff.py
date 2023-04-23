@@ -139,6 +139,10 @@ def _find_test_sample(mtx):
 image_pick4depth = [0, 6, 12, 19]
 
 class LLFFDataset:
+    white = T.ToTensor()(sio.loadmat('./myspecdata/decorner/meanwhite.mat')['data'])
+    black = T.ToTensor()(sio.loadmat('./myspecdata/decorner/meanblack.mat')['data'])
+    filters_back = []
+
     def __init__(self, datadir, split='train', downsample=4, is_stack=False, hold_every=8):
         """
         spheric_poses: whether the images are taken in a spheric inward-facing manner
@@ -153,9 +157,10 @@ class LLFFDataset:
         self.downsample = downsample
 
         self.blender2opencv = np.eye(4)#np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+        self.prepare_filters(LLFFDataset)
         self.read_meta() # read poses, also for depth data and rays
         self.load_img() # read images and form rays
-        self.white_bg = False
+        self.white_bg = args.white_bkgd
 
         #         self.near_far = [np.min(self.near_fars[:,0]),np.max(self.near_fars[:,1])]
         self.near_far = [0.0, 1.0]
@@ -163,6 +168,21 @@ class LLFFDataset:
         # self.scene_bbox = torch.tensor([[-1.67, -1.5, -1.0], [1.67, 1.5, 1.0]])
         self.center = torch.mean(self.scene_bbox, dim=0).float().view(1, 1, 3)
         self.invradius = 1.0 / (self.scene_bbox[1] - self.center).float().view(1, 1, 3)
+
+
+    @staticmethod
+    def prepare_filters(cls):
+        bandstart = args.band_start_idx
+        if not isinstance(cls.filters_back, list):
+            return
+        for i in range(0, args.filters + 1):
+            fi = torch.FloatTensor(
+                np.diagonal(sio.loadmat(os.path.join(args.datadir, f'../filters/f_{i}.mat'))['filter'])
+            )[bandstart:]
+
+            cls.filters_back.append(fi)
+        cls.filters_back = torch.stack(cls.filters_back)
+
 
     def read_meta(self):
         poses_bounds = np.load(os.path.join(self.root_dir, 'poses_bounds.npy'))  # (N_images, 17)
@@ -237,11 +257,12 @@ class LLFFDataset:
         # use first N_images-1 to train, the LAST is val
         if os.path.exists(rays_savePath):
             data = torch.load(rays_savePath)
-            self.all_rays = data['rays']
-            self.all_rgbs = data['rgbs']
+            all_rays, all_rgbs, all_poses, all_filtersIdx = data['rays'], data['rgbs'], data['poses'], data['filterids']
         else:
-            self.all_rays = []
-            self.all_rgbs = []
+            all_rays = []
+            all_rgbs = []
+            all_poses = []
+            all_filtersIdx = []
             for r, row in enumerate(sample_matrix):
                 image_paths = sorted(glob.glob(str(folders[r] / f"images/*{args.img_ext}")))
                 for c, aimEle in enumerate(row):
@@ -254,29 +275,40 @@ class LLFFDataset:
                     c2w = torch.FloatTensor(self.poses[r])
 
                     img = self.read_non_raw(image_path)   # c h w [0-1]
+                    if self.args.lsc:
+                        img = LLFFDataset.img_correction(img)   # lens shade correction & black level correction
+
                     if self.downsample != 1.0:
                         img = tensor_resizer(img)
 
                     img = img.view(3, -1).permute(1, 0)  # (h*w, 3) RGB
-                    self.all_rgbs.append(img)
+                    all_rgbs.append(img)
 
                     rays_o, rays_d = get_rays(self.directions, c2w)  # both (h*w, 3)
                     rays_o, rays_d = ndc_rays_blender(H, W, self.focal[0], 1.0, rays_o, rays_d)
                     # viewdir = rays_d / torch.norm(rays_d, dim=-1, keepdim=True)
-                    self.all_rays.append(torch.cat([rays_o, rays_d], 1))  # (h*w, 6)
+                    all_rays.append(torch.cat([rays_o, rays_d], 1))  # (h*w, 6)
+                    all_poses.append(torch.LongTensor([[r]]).expand([rays_o.shape[0], -1]))
+                    all_filtersIdx.append(torch.LongTensor([[c]]).expand([rays_o.shape[0], -1]))
 
             torch.save({
-                'rgbs': self.all_rgbs,
-                'rays': self.all_rays
+                'rgbs': all_rgbs,
+                'rays': all_rays,
+                'poses': all_poses,
+                'filterids': all_filtersIdx
             }, rays_savePath)
-        print(f'{len(self.all_rgbs)} of images are loaded!')
+        print(f'{len(all_rgbs)} of images are loaded!')
 
         if not self.is_stack:
-            self.all_rays = torch.cat(self.all_rays, 0) # (len(self.meta['frames])*h*w, 3)
-            self.all_rgbs = torch.cat(self.all_rgbs, 0) # (len(self.meta['frames])*h*w,3)
+            self.all_rays = torch.cat(all_rays, 0) # (len(self.meta['frames])*h*w, 3)
+            self.all_rgbs = torch.cat(all_rgbs, 0) # (len(self.meta['frames])*h*w,3)
+            self.all_poses = torch.cat(all_poses, 0)
+            self.all_filtersIdx = torch.cat(all_filtersIdx, 0)
         else:
-            self.all_rays = torch.stack(self.all_rays, 0)   # (len(self.meta['frames]),h*w, 3)
-            self.all_rgbs = torch.stack(self.all_rgbs, 0).reshape(-1,*self.img_wh[::-1], 3)  # (len(self.meta['frames]),h,w,3)
+            self.all_rays = torch.stack(all_rays, 0)   # (len(self.meta['frames]),h*w, 3)
+            self.all_rgbs = torch.stack(all_rgbs, 0).reshape(-1,*self.img_wh[::-1], 3)  # (len(self.meta['frames]),h,w,3)
+            self.all_poses = torch.stack(all_poses, 0)
+            self.all_filtersIdx = torch.stack(all_filtersIdx, 0)
 
 
     def load_colmap_depth(self, poses, bds_raw, basedir, factor=8, bd_factor=.75):
@@ -379,6 +411,10 @@ class LLFFDataset:
 
         return img
 
+    @classmethod
+    def img_correction(cls, img):
+        return torch.clamp_max(torch.clamp_min(img - 0.014, 0.002) / cls.white, 1)
+        # return (img - 0.014) / cls.white
 
     def transform(self, img, maxbits_num=65535.):
         return torch.FloatTensor(img / maxbits_num).permute(2, 0, 1)

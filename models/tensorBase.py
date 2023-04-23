@@ -6,15 +6,15 @@ import numpy as np
 import time
 from opt import args
 from torch_efficient_distloss import eff_distloss, eff_distloss_native, flatten_eff_distloss
-from utils import norm0to1
+from utils import norm0to1, positionencoding1D
 
 def positional_encoding(positions, freqs):
-    
-        freq_bands = (2**torch.arange(freqs).float()).to(positions.device)  # (F,)
-        pts = (positions[..., None] * freq_bands).reshape(
-            positions.shape[:-1] + (freqs * positions.shape[-1], ))  # (..., DF)
-        pts = torch.cat([torch.sin(pts), torch.cos(pts)], dim=-1)
-        return pts
+    freq_bands = (2**torch.arange(freqs).float()).to(positions.device)  # (F,)
+    pts = (positions[..., None] * freq_bands).reshape(
+        positions.shape[:-1] + (freqs * positions.shape[-1], ))  # (..., DF)
+    pts = torch.cat([torch.sin(pts), torch.cos(pts)], dim=-1)
+    return pts
+
 
 def raw2alpha(sigma, dist):
     # sigma, dist  [N_rays, N_samples]
@@ -209,6 +209,10 @@ class TensorBase(torch.nn.Module):
         self.shadingMode, self.pos_pe, self.view_pe, self.fea_pe, self.featureC = shadingMode, pos_pe, view_pe, fea_pe, featureC
         self.init_render_func(shadingMode, pos_pe, view_pe, fea_pe, featureC, device)
         
+        self.input_1D = torch.from_numpy(positionencoding1D(args.spec_channel, 2)).float().to(device)
+        # self.input_1D = positionalencoding1d_my(8, 31).to(device)
+        self.ssffcn = SSFFcn(2, 3).to(device)
+
         self.depth_linear = Depth_linear().to(device)
 
 
@@ -403,7 +407,6 @@ class TensorBase(torch.nn.Module):
                 t_min = torch.minimum(rate_a, rate_b).amax(-1)#.clamp(min=near, max=far)
                 t_max = torch.maximum(rate_a, rate_b).amin(-1)#.clamp(min=near, max=far)
                 mask_inbbox = t_max > t_min
-
             else:
                 xyz_sampled, _,_ = self.sample_ray(rays_o, rays_d, N_samples=N_samples, is_train=False)
                 mask_inbbox= (self.alphaMask.sample_alpha(xyz_sampled).view(xyz_sampled.shape[:-1]) > 0).any(-1)
@@ -413,7 +416,7 @@ class TensorBase(torch.nn.Module):
         mask_filtered = torch.cat(mask_filtered).view(all_rgbs.shape[:-1])
 
         print(f'Ray filtering done! takes {time.time()-tt} s. ray mask ratio: {torch.sum(mask_filtered) / N}')
-        return all_rays[mask_filtered], all_rgbs[mask_filtered]
+        return all_rays[mask_filtered], all_rgbs[mask_filtered], mask_filtered
 
 
     def feature2density(self, density_features):
@@ -446,7 +449,7 @@ class TensorBase(torch.nn.Module):
         return alpha
 
 
-    def forward(self, rays_chunk, white_bg=True, is_train=False, ndc_ray=False, N_samples=-1):
+    def forward(self, rays_chunk, poseid, filters, white_bg=True, is_train=False, ndc_ray=False, N_samples=-1):
 
         # sample points
         viewdirs = rays_chunk[:, 3:6]
@@ -473,7 +476,7 @@ class TensorBase(torch.nn.Module):
 
 
         sigma = torch.zeros(xyz_sampled.shape[:-1], device=xyz_sampled.device)
-        rgb = torch.zeros((*xyz_sampled.shape[:2], 3), device=xyz_sampled.device)
+        rgb = torch.zeros((*xyz_sampled.shape[:2], args.spec_channel), device=xyz_sampled.device)
 
         if ray_valid.any():
             xyz_sampled = self.normalize_coord(xyz_sampled)
@@ -504,17 +507,21 @@ class TensorBase(torch.nn.Module):
             rgb[app_mask] = valid_rgbs
 
         acc_map = torch.sum(weight, -1)
-        rgb_map = torch.sum(weight[..., None] * rgb, -2)
+        spec_map = torch.sum(weight[..., None] * rgb, -2)
 
         if white_bg or (is_train and torch.rand((1,))<0.5):
-            rgb_map = rgb_map + (1. - acc_map[..., None])
+            spec_map = spec_map + (1. - acc_map[..., None])
+        spec_map = spec_map.clamp(0,1)
 
-        
+        # prepare a ssf
+        Phi = self.ssffcn(self.input_1D)  # self.Phi*self.Phi
+
+        rgb_map = (spec_map * filters) @ Phi
         rgb_map = rgb_map.clamp(0,1)
 
         # with torch.no_grad():
         depth_map = torch.sum(weight * z_vals, -1)
         # depth_map = depth_map + (1. - acc_map) * rays_chunk[..., -1]
 
-        return rgb_map, depth_map, dist_loss # rgb, sigma, alpha, weight, bg_weight
+        return rgb_map, depth_map, dist_loss, spec_map # rgb, sigma, alpha, weight, bg_weight
 

@@ -4,25 +4,33 @@ from dataLoader.ray_utils import get_rays
 from models.tensoRF import TensorVM, TensorCP, raw2alpha, TensorVMSplit, AlphaGridMask
 from utils import *
 from dataLoader.ray_utils import ndc_rays_blender
+from dataLoader.llff import LLFFDataset
+from opt import args
 
+def OctreeRender_trilinear_fast(rays, tensorf, chunk=args.chunk_size, N_samples=-1, ndc_ray=False, white_bg=True, \
+                                is_train=False, device='cuda', **kargs):
+    poseids, filterids = kargs['poseids'], kargs['filterids']
+    filters = LLFFDataset.filters_back
 
-def OctreeRender_trilinear_fast(rays, tensorf, chunk=4096, N_samples=-1, ndc_ray=False, white_bg=True, is_train=False, device='cuda'):
-
-    rgbs, alphas, depth_maps, weights, uncertainties, dist_losses = [], [], [], [], [], []
+    rgbs, alphas, depth_maps, weights, uncertainties, dist_losses, spec_maps = [], [], [], [], [], [], []
     N_rays_all = rays.shape[0]
     for chunk_idx in range(N_rays_all // chunk + int(N_rays_all % chunk > 0)):
         rays_chunk = rays[chunk_idx * chunk:(chunk_idx + 1) * chunk].to(device)
+        poseids_chunk = poseids[chunk_idx * chunk:(chunk_idx + 1) * chunk].to(device)
+        filters_chunk = filters[filterids[chunk_idx * chunk:(chunk_idx + 1) * chunk].reshape(-1)].to(device)
     
-        rgb_map, depth_map, dist_loss = tensorf(rays_chunk, is_train=is_train, white_bg=white_bg, ndc_ray=ndc_ray, N_samples=N_samples)
+        rgb_map, depth_map, dist_loss, spec_map = tensorf(rays_chunk, poseids_chunk, filters_chunk, is_train=is_train, white_bg=white_bg, \
+                                                ndc_ray=ndc_ray, N_samples=N_samples)
 
         rgbs.append(rgb_map)
         depth_maps.append(depth_map)
         dist_losses.append(dist_loss)
+        spec_maps.append(spec_map)
     
-    return torch.cat(rgbs), None, torch.cat(depth_maps), None, None, torch.cat(dist_losses).mean()
+    return torch.cat(rgbs), None, torch.cat(depth_maps), None, None, torch.cat(dist_losses).mean(), spec_maps
 
 @torch.no_grad()
-def evaluation(test_dataset,tensorf, args, renderer, savePath=None, N_vis=5, prtx='', N_samples=-1,
+def evaluation(test_dataset:LLFFDataset,tensorf, args, renderer, savePath=None, N_vis=5, prtx='', N_samples=-1,
                white_bg=False, ndc_ray=False, compute_extra_metrics=True, device='cuda'):
     PSNRs, rgb_maps, depth_maps = [], [], []
     ssims,l_alex,l_vgg=[],[],[]
@@ -42,8 +50,9 @@ def evaluation(test_dataset,tensorf, args, renderer, savePath=None, N_vis=5, prt
         W, H = test_dataset.img_wh
         rays = samples.view(-1,samples.shape[-1])
 
-        rgb_map, _, depth_map, _, _, _ = renderer(rays, tensorf, chunk=4096, N_samples=N_samples,
-                                        ndc_ray=ndc_ray, white_bg = white_bg, device=device)
+        rgb_map, _, depth_map, _, _, _, spec_map = \
+            renderer(rays, tensorf, N_samples=N_samples, ndc_ray=ndc_ray, white_bg = white_bg, device=device, \
+                     poseids=test_dataset.all_poses[idxs[idx]], filterids=test_dataset.all_filtersIdx[idxs[idx]])
         rgb_map = rgb_map.clamp(0.0, 1.0)
 
         rgb_map, depth_map = rgb_map.reshape(H, W, 3).cpu(), depth_map.reshape(H, W).cpu()
@@ -67,12 +76,12 @@ def evaluation(test_dataset,tensorf, args, renderer, savePath=None, N_vis=5, prt
         rgb_maps.append(rgb_map)
         depth_maps.append(depth_map)
         if savePath is not None:
-            imageio.imwrite(f'{savePath}/{prtx}{idx:03d}.png', rgb_map)
+            # imageio.imwrite(f'{savePath}/{prtx}{idx:03d}.png', rgb_map)
             rgb_map = np.concatenate((rgb_map, depth_map), axis=1)
             imageio.imwrite(f'{savePath}/rgbd/{prtx}{idx:03d}.png', rgb_map)
 
-    imageio.mimwrite(f'{savePath}/{prtx}video.mp4', np.stack(rgb_maps), fps=30, quality=10)
-    imageio.mimwrite(f'{savePath}/{prtx}depthvideo.mp4', np.stack(depth_maps), fps=30, quality=10)
+    # imageio.mimwrite(f'{savePath}/{prtx}video.mp4', np.stack(rgb_maps), fps=30, quality=10)
+    # imageio.mimwrite(f'{savePath}/{prtx}depthvideo.mp4', np.stack(depth_maps), fps=30, quality=10)
 
     if PSNRs:
         psnr = np.mean(np.asarray(PSNRs))
@@ -101,6 +110,7 @@ def evaluation_path(test_dataset,tensorf, c2ws, renderer, savePath=None, N_vis=5
         pass
 
     near_far = test_dataset.near_far
+    ones_filtersIdx = torch.LongTensor([[0]])
     for idx, c2w in tqdm(enumerate(c2ws)):
 
         W, H = test_dataset.img_wh
@@ -111,8 +121,9 @@ def evaluation_path(test_dataset,tensorf, c2ws, renderer, savePath=None, N_vis=5
             rays_o, rays_d = ndc_rays_blender(H, W, test_dataset.focal[0], 1.0, rays_o, rays_d)
         rays = torch.cat([rays_o, rays_d], 1)  # (h*w, 6)
 
-        rgb_map, _, depth_map, _, _, _ = renderer(rays, tensorf, chunk=8192, N_samples=N_samples,
-                                        ndc_ray=ndc_ray, white_bg = white_bg, device=device)
+        rgb_map, _, depth_map, _, _, _, spec_map = \
+            renderer(rays, tensorf, N_samples=N_samples, ndc_ray=ndc_ray, white_bg = white_bg, device=device, \
+                     poseids=None, filterids=ones_filtersIdx)
         rgb_map = rgb_map.clamp(0.0, 1.0)
 
         rgb_map, depth_map = rgb_map.reshape(H, W, 3).cpu(), depth_map.reshape(H, W).cpu()

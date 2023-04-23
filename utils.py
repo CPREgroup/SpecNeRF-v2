@@ -7,6 +7,40 @@ import scipy.signal
 
 mse2psnr = lambda x : -10. * torch.log(x) / torch.log(torch.Tensor([10.]))
 
+def positionencoding1D(W, L):
+
+    x_linspace = (np.linspace(0, W - 1, W) / W) * 2 - 1
+
+    x_el = []
+
+    x_el_hf = []
+
+    pe_1d = np.zeros((W, 2*L+1))
+    # cache the values so you don't have to do function calls at every pixel
+    for el in range(0, L):
+        val = 2 ** el
+
+        x = np.sin(val * np.pi * x_linspace)
+        x_el.append(x)
+
+        x = np.cos(val * np.pi * x_linspace)
+        x_el_hf.append(x)
+
+
+    for x_i in range(0, W):
+
+        p_enc = []
+
+        for li in range(0, L):
+            p_enc.append(x_el[li][x_i])
+            p_enc.append(x_el_hf[li][x_i])
+
+        p_enc.append(x_linspace[x_i])
+
+        pe_1d[x_i] = np.array(p_enc)
+
+    return pe_1d.astype('float32')
+
 
 def norm0to1(x):
     xmin, _ = x.min(dim=1, keepdim=True)
