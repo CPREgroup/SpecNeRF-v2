@@ -7,6 +7,7 @@ import time
 from opt import args
 from torch_efficient_distloss import eff_distloss, eff_distloss_native, flatten_eff_distloss
 from utils import norm0to1, positionencoding1D
+from dataLoader.llff import LLFFDataset
 
 def positional_encoding(positions, freqs):
     freq_bands = (2**torch.arange(freqs).float()).to(positions.device)  # (F,)
@@ -163,8 +164,8 @@ class SSFFcn(torch.nn.Module):
 class Depth_linear(torch.nn.Module):
     def __init__(self):
         super(Depth_linear, self).__init__()
-        self.a = nn.Parameter(torch.FloatTensor([7]))
-        self.b = nn.Parameter(torch.FloatTensor([0.1]))
+        self.a = nn.Parameter(torch.FloatTensor([LLFFDataset.depth_mean]))
+        self.b = nn.Parameter(torch.FloatTensor([0.02]))
 
     def forward(self, depth_est):
         # if self.a == -1:

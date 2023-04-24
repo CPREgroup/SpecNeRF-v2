@@ -123,7 +123,7 @@ def evaluation_path(test_dataset,tensorf, c2ws, renderer, savePath=None, N_vis=5
 
         rgb_map, _, depth_map, _, _, _, spec_map = \
             renderer(rays, tensorf, N_samples=N_samples, ndc_ray=ndc_ray, white_bg = white_bg, device=device, \
-                     poseids=None, filterids=ones_filtersIdx)
+                     poseids=ones_filtersIdx.expand((rays.shape[0], -1)), filterids=ones_filtersIdx.expand((rays.shape[0], -1)))
         rgb_map = rgb_map.clamp(0.0, 1.0)
 
         rgb_map, depth_map = rgb_map.reshape(H, W, 3).cpu(), depth_map.reshape(H, W).cpu()

@@ -2,8 +2,8 @@
 import os
 from tqdm.auto import tqdm
 from opt import config_parser, args
-
-
+from dataLoader.IDsampler import get_simple_sampler
+from shutil import copy
 import scipy.io as sio
 import json, random
 from renderer import *
@@ -49,6 +49,8 @@ class SimpleSampler:
             self.curr = 0
         return self.ids[self.curr:self.curr+self.batch]
 
+    def set_batch(self, batch):
+        self.batch = batch
 
 @torch.no_grad()
 def export_mesh(args):
@@ -129,6 +131,9 @@ def reconstruction(args):
     os.makedirs(f'{logfolder}/imgs_rgba', exist_ok=True)
     os.makedirs(f'{logfolder}/rgba', exist_ok=True)
     os.makedirs(f'{logfolder}/SSFs', exist_ok=True)
+    # copy config file
+    copy(args.config, logfolder)
+
     summary_writer = SummaryWriter(logfolder)
 
 
@@ -177,12 +182,12 @@ def reconstruction(args):
     if not args.ndc_ray:
         allrays, allrgbs, mask_filtered = tensorf.filtering_rays(allrays, allrgbs, bbox_only=True)
         allposesID, all_filterID = allposesID[mask_filtered], all_filterID[mask_filtered]
-    trainingSampler = SimpleSampler(allrays.shape[0], args.batch_size)
+    trainingSampler = SimpleSampler(allrays.shape[0], args.batch_size - args.depth_supervise * args.depth_batchsize_endIter[0])
 
     if args.depth_supervise:
         depthrays, depthweights, depthvalue = \
             train_dataset.depth_rays, train_dataset.depth_weight, train_dataset.depth_value
-        depthSampler = SimpleSampler(depthrays.shape[0], 1024)
+        depthSampler = SimpleSampler(depthrays.shape[0], args.depth_batchsize_endIter[0])
 
     Ortho_reg_weight = args.Ortho_weight
     print("initial Ortho_reg_weight", Ortho_reg_weight)
@@ -196,8 +201,6 @@ def reconstruction(args):
 
     pbar = tqdm(range(args.n_iters), miniters=args.progress_refresh_rate, file=sys.stdout)
     for iteration in pbar:
-
-
         ray_idx = trainingSampler.nextids()
         rays_train, rgb_train, poseID_train, filterID_train = allrays[ray_idx], allrgbs[ray_idx].to(device), allposesID[ray_idx], all_filterID[ray_idx]
 
@@ -206,7 +209,11 @@ def reconstruction(args):
             depth_rays_train, depth_wei_train, depth_val_train = \
                 depthrays[depth_rays_idx], depthweights[depth_rays_idx].to(device), depthvalue[depth_rays_idx].to(device)
 
+            fake_poseid = torch.LongTensor([[0]]).expand((depth_rays_idx.shape[0], -1))
+            fake_filterID = fake_poseid
             rays_train = torch.cat([rays_train, depth_rays_train])
+            poseID_train = torch.cat([poseID_train, fake_poseid])
+            filterID_train = torch.cat([filterID_train, fake_filterID])
 
         #rgb_map, alphas_map, depth_map, weights, uncertainty
         rgb_map, alphas_map, depth_map, weights, uncertainty, dist_loss, spec_map = \
@@ -214,15 +221,20 @@ def reconstruction(args):
                      is_train=True, poseids=poseID_train, filterids=filterID_train)
 
         if args.depth_supervise:
+            rgb_batch = args.batch_size - args.depth_batchsize_endIter[0]
             # disentangle
-            rgb_map = rgb_map[:args.batch_size]
-            depth_map, depth_supervise = depth_map[:args.batch_size], depth_map[args.batch_size:]
+            rgb_map = rgb_map[:rgb_batch]
+            depth_map, depth_supervise = depth_map[:rgb_batch], depth_map[rgb_batch:]
 
             # depth map and loss
             depth_est_mapped = tensorf.depth_linear(depth_supervise)
             depth_loss = torch.mean((torch.abs(depth_val_train - depth_est_mapped)) * depth_wei_train)
             depth_loss_print = depth_loss.detach().item()
             summary_writer.add_scalar('train/depth_loss', depth_loss_print, global_step=iteration)
+            # depth supervise only used for several rounds
+            if iteration + 1 == args.depth_batchsize_endIter[1]:
+                args.depth_supervise = False
+                trainingSampler.set_batch(args.batch_size)
         else:
             depth_loss = depth_loss_print = 0
 
@@ -312,7 +324,7 @@ def reconstruction(args):
                 # filter rays outside the bbox
                 allrays, allrgbs, mask_filtered = tensorf.filtering_rays(allrays,allrgbs)
                 allposesID, all_filterID = allposesID[mask_filtered], all_filterID[mask_filtered]
-                trainingSampler = SimpleSampler(allrgbs.shape[0], args.batch_size)
+                trainingSampler = SimpleSampler(allrgbs.shape[0], args.batch_size - args.depth_supervise * args.depth_batchsize_endIter[0])
 
 
         if iteration in upsamp_list:

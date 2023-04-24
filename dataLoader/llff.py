@@ -106,7 +106,7 @@ def render_path_spiral(c2w, up, rads, focal, zdelta, zrate, N_rots=2, N=120):
     return render_poses
 
 
-def get_spiral(c2ws_all, near_fars, rads_scale=1.0, N_views=120):
+def get_spiral(c2ws_all, near_fars, rads_scale=1.0, N_views=120, n_rot=2):
     # center pose
     c2w = average_poses(c2ws_all)
 
@@ -122,7 +122,7 @@ def get_spiral(c2ws_all, near_fars, rads_scale=1.0, N_views=120):
     zdelta = near_fars.min() * .2
     tt = c2ws_all[:, :3, 3]
     rads = np.percentile(np.abs(tt), 90, 0) * rads_scale
-    render_poses = render_path_spiral(c2w, up, rads, focal, zdelta, zrate=.5, N=N_views)
+    render_poses = render_path_spiral(c2w, up, rads, focal, zdelta, zrate=.5, N=N_views, N_rots=n_rot)
     return np.stack(render_poses)
 
 
@@ -145,6 +145,7 @@ class LLFFDataset:
     white = T.ToTensor()(sio.loadmat('./myspecdata/decorner/meanwhite.mat')['data'])
     black = T.ToTensor()(sio.loadmat('./myspecdata/decorner/meanblack.mat')['data'])
     filters_back = []
+    depth_mean = 1
 
     def __init__(self, datadir, split='train', downsample=4, is_stack=False, hold_every=8):
         """
@@ -166,8 +167,9 @@ class LLFFDataset:
         self.white_bg = args.white_bkgd
 
         #         self.near_far = [np.min(self.near_fars[:,0]),np.max(self.near_fars[:,1])]
-        self.near_far = [0.0, 1.0]
-        self.scene_bbox = torch.tensor([[-1.5, -1.67, -1.0], [1.5, 1.67, 1.0]])
+        self.near_far = [0.0, 1.0] if args.ndc_ray == 1 else [0.01, 6.0]
+        self.scene_bbox = torch.tensor([[-1.5, -1.67, -1.0], [1.5, 1.67, 1.0]]) if args.ndc_ray == 1 else \
+            torch.tensor([[-7.0, -7.0, -5], [7.0, 7.0, 5]])
         # self.scene_bbox = torch.tensor([[-1.67, -1.5, -1.0], [1.67, 1.5, 1.0]])
         self.center = torch.mean(self.scene_bbox, dim=0).float().view(1, 1, 3)
         self.invradius = 1.0 / (self.scene_bbox[1] - self.center).float().view(1, 1, 3)
@@ -227,12 +229,12 @@ class LLFFDataset:
         self.poses[..., 3] /= scale_factor
 
         # build rendering path
-        N_views, N_rots = 120, 2
+        N_views, N_rots = 60, 1 # 120, 2
         tt = self.poses[:, :3, 3]  # ptstocam(poses[:3,3,:].T, c2w).T
         up = normalize(self.poses[:, :3, 1].sum(0))
         rads = np.percentile(np.abs(tt), 90, 0)
 
-        self.render_path = get_spiral(self.poses, self.near_fars, N_views=N_views)
+        self.render_path = get_spiral(self.poses, self.near_fars, N_views=N_views, n_rot=N_rots)
 
         # distances_from_center = np.linalg.norm(self.poses[..., 3], axis=1)
         # val_idx = np.argmin(distances_from_center)  # choose val image as the closest to
@@ -321,6 +323,7 @@ class LLFFDataset:
 
 
     def load_colmap_depth(self, poses, bds_raw, basedir, factor=8, bd_factor=.75):
+        croph, cropw = args.crop_hw
         images = read_images_binary(Path(basedir) / 'sparse' / '0' / 'images.bin')
         points = read_points3d_binary(Path(basedir) / 'sparse' / '0' / 'points3D.bin')
 
@@ -346,6 +349,9 @@ class LLFFDataset:
             weight_list = []
             for i in range(len(images[id_im].xys)):
                 point2D = images[id_im].xys[i]  # w h
+                if np.abs(point2D[0] - 0.5*W) > cropw * 0.5 or np.abs(point2D[1] - 0.5*H) > croph * 0.5:
+                    # outside of the crop border
+                    continue
                 id_3D = images[id_im].point3D_ids[i]
                 if id_3D == -1:
                     continue
@@ -357,7 +363,7 @@ class LLFFDataset:
                 weight = 2 * np.exp(-(err / Err_mean) ** 2)
                 depth_list.append(depth)
                 # re-position the coords relative to the crop size
-                coord_list.append(point2D / factor)
+                coord_list.append((point2D - [0.5*(W-cropw), 0.5*(H-croph)]) / factor)
                 weight_list.append(weight)
             if len(depth_list) > 0:
                 print(id_im, len(depth_list), np.min(depth_list), np.max(depth_list), np.mean(depth_list))
@@ -403,6 +409,8 @@ class LLFFDataset:
         self.depth_rays = torch.cat(depth_rays, 0)
         self.depth_weight = torch.cat(depth_weight, 0)
         self.depth_value = torch.cat(depth_value, 0)
+
+        LLFFDataset.depth_mean = self.depth_value.mean()
 
     def read_non_raw(self, image_path):
         is_raw = image_path.endswith('.dng')
