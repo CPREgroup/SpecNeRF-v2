@@ -140,6 +140,7 @@ def config_parser(cmd=None):
     parser.add_argument('--distortion_loss', action='store_true')
     parser.add_argument('--band_start_idx',type=int,default=3)
     parser.add_argument('--lsc', action='store_true')
+    parser.add_argument("--crop_hw", type=int, action="append")
 
 
     if cmd is not None:

@@ -202,6 +202,10 @@ class LLFFDataset:
             self.depth_list = self.load_colmap_depth(poses, self.near_fars, 
                                                     Path(self.root_dir), self.downsample)
 
+        croph, cropw = args.crop_hw
+        poses[:,0, -1] = croph
+        poses[:,1, -1] = cropw
+
         # Step 1: rescale focal length according to training resolution
         H, W, self.focal = poses[0, :, -1]  # original intrinsics, same for all images
         self.img_wh = np.array([int(W / self.downsample), int(H / self.downsample)])
@@ -247,7 +251,7 @@ class LLFFDataset:
 
 
     def load_img(self):
-        rays_savePath = Path(args.datadir) / f"rays_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
+        rays_savePath = Path(args.datadir) / f"rays_ndc{args.ndc_ray}_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
         folders = [Path(args.datadir) / args.img_dir_name.replace('??', str(i)) 
                    for i in range(args.angles)]
         self.training_matrix = np.hstack((np.array([1] * args.angles)[:, np.newaxis], 
@@ -256,7 +260,6 @@ class LLFFDataset:
         print(f'{sample_matrix.sum()} of images are loading...')
 
         W, H = self.img_wh
-        tensor_resizer = T.Resize([H, W], antialias=True)
         # use first N_images-1 to train, the LAST is val
         if os.path.exists(rays_savePath):
             data = torch.load(rays_savePath)
@@ -266,6 +269,8 @@ class LLFFDataset:
             all_rgbs = []
             all_poses = []
             all_filtersIdx = []
+            tensor_cropper = T.CenterCrop(args.crop_hw)
+            tensor_resizer = T.Resize([H, W], antialias=True)
             for r, row in enumerate(sample_matrix):
                 image_paths = sorted(glob.glob(str(folders[r] / f"images/*{args.img_ext}")))
                 for c, aimEle in enumerate(row):
@@ -280,7 +285,7 @@ class LLFFDataset:
                     img = self.read_non_raw(image_path)   # c h w [0-1]
                     if args.lsc:
                         img = LLFFDataset.img_correction(img)   # lens shade correction & black level correction
-
+                    img = tensor_cropper(img)   # c croph cropw [0-1]
                     if self.downsample != 1.0:
                         img = tensor_resizer(img)
 
@@ -288,7 +293,8 @@ class LLFFDataset:
                     all_rgbs.append(img)
 
                     rays_o, rays_d = get_rays(self.directions, c2w)  # both (h*w, 3)
-                    rays_o, rays_d = ndc_rays_blender(H, W, self.focal[0], 1.0, rays_o, rays_d)
+                    if args.ndc_ray == 1:
+                        rays_o, rays_d = ndc_rays_blender(H, W, self.focal[0], 1.0, rays_o, rays_d)
                     # viewdir = rays_d / torch.norm(rays_d, dim=-1, keepdim=True)
                     all_rays.append(torch.cat([rays_o, rays_d], 1))  # (h*w, 6)
                     all_poses.append(torch.LongTensor([[r]]).expand([rays_o.shape[0], -1]))
