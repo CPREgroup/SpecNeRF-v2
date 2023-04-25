@@ -378,6 +378,7 @@ if __name__ == '__main__':
 
     if  args.export_mesh:
         export_mesh(args)
+        exit
 
     if args.render_only and (args.render_test or args.render_path):
         render_test(args)

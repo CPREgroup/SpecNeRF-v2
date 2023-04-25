@@ -127,15 +127,15 @@ def get_spiral(c2ws_all, near_fars, rads_scale=1.0, N_views=120, n_rot=2):
 
 
 def _find_test_sample(mtx):
-    # mtxcp = mtx[...]
-    # mtxcp[:, 0] = 0
-    # zero_inds = np.argwhere(mtxcp == 0)
-    # choose_zero_inds = np.random.choice(zero_inds, (5, )).tolist()
-    choose_zero_inds = [[0, 0], [5, 0], [11, 0]]
+    mtxcp = mtx[...]
+    mtxcp[:, 0] = 1
+    zero_inds = np.argwhere(mtxcp == 0)
+    choose_zero_inds = np.random.choice(np.array(range(zero_inds.shape[0])), 3).tolist()
+    # choose_zero_inds = [[0, 0], [5, 0], [11, 0]]
 
     sample_mtx = np.zeros_like(mtx)
     for idx in choose_zero_inds:
-        sample_mtx[tuple(idx)] = 1
+        sample_mtx[tuple(zero_inds[idx])] = 1
 
     return sample_mtx
 
@@ -256,7 +256,7 @@ class LLFFDataset:
         rays_savePath = Path(args.datadir) / f"rays_ndc{args.ndc_ray}_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
         folders = [Path(args.datadir) / args.img_dir_name.replace('??', str(i)) 
                    for i in range(args.angles)]
-        self.training_matrix = np.hstack((np.array([1] * args.angles)[:, np.newaxis], 
+        self.training_matrix = np.hstack((np.array([0] * args.angles)[:, np.newaxis], 
                                           sio.loadmat(args.sample_matrix_dir)['mask'])) # first column is rgb image, which is needed
         sample_matrix = self.training_matrix if self.split == 'train' else _find_test_sample(self.training_matrix)
         print(f'{sample_matrix.sum()} of images are loading...')
