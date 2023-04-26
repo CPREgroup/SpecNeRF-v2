@@ -177,7 +177,7 @@ def reconstruction(args):
     torch.cuda.empty_cache()
     PSNRs,PSNRs_test = [],[0]
 
-    if args.rgb4shape:
+    if args.rgb4shape_endIter:
         allrays_4shape, allrgbs_4shape, allposesID_4shape, all_filterID_4shape = get_dataset4RGBtraining(train_dataset)
         rgb4shapeSampler = SimpleSampler(allrays_4shape.shape[0], args.batch_size - args.depth_supervise * args.depth_batchsize_endIter[0])
 
@@ -204,8 +204,12 @@ def reconstruction(args):
 
     pbar = tqdm(range(args.n_iters), miniters=args.progress_refresh_rate, file=sys.stdout)
     for iteration in pbar:
-        ray_idx = trainingSampler.nextids()
-        rays_train, rgb_train, poseID_train, filterID_train = allrays[ray_idx], allrgbs[ray_idx].to(device), allposesID[ray_idx], all_filterID[ray_idx]
+        if iteration < args.rgb4shape_endIter:
+            ray_idx = rgb4shapeSampler.nextids()
+            rays_train, rgb_train, poseID_train, filterID_train = allrays_4shape[ray_idx], allrgbs_4shape[ray_idx].to(device), allposesID_4shape[ray_idx], all_filterID_4shape[ray_idx]
+        else:
+            ray_idx = trainingSampler.nextids()
+            rays_train, rgb_train, poseID_train, filterID_train = allrays[ray_idx], allrgbs[ray_idx].to(device), allposesID[ray_idx], all_filterID[ray_idx]
 
         if args.depth_supervise:
             depth_rays_idx = depthSampler.nextids()

@@ -135,7 +135,7 @@ def config_parser(cmd=None):
     parser.add_argument('--img_dir_name',type=str,default='pose??img')
     parser.add_argument('--spec_channel', type=int, default=30)
     parser.add_argument('--depth_supervise', action='store_true')
-    parser.add_argument('--rgb4shape', action='store_true')
+    parser.add_argument('--rgb4shape_endIter', type=int,default=0)
     parser.add_argument('--depth_batchsize_endIter', type=int, action="append")
     parser.add_argument('--sample_matrix_dir',type=str,default='null')
     parser.add_argument('--img_ext',type=str,default='dng')

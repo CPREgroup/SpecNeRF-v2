@@ -6,6 +6,7 @@ from utils import *
 from dataLoader.ray_utils import ndc_rays_blender
 from dataLoader.llff import LLFFDataset
 from opt import args
+import scipy.io as sio
 
 def OctreeRender_trilinear_fast(rays, tensorf, chunk=args.chunk_size, N_samples=-1, ndc_ray=False, white_bg=True, \
                                 is_train=False, device='cuda', **kargs):
@@ -36,6 +37,7 @@ def evaluation(test_dataset:LLFFDataset,tensorf, args, renderer, savePath=None, 
     ssims,l_alex,l_vgg=[],[],[]
     os.makedirs(savePath, exist_ok=True)
     os.makedirs(savePath+"/rgbd", exist_ok=True)
+    os.makedirs(savePath+"/spec", exist_ok=True)
 
     try:
         tqdm._instances.clear()
@@ -55,7 +57,7 @@ def evaluation(test_dataset:LLFFDataset,tensorf, args, renderer, savePath=None, 
                      poseids=test_dataset.all_poses[idxs[idx]], filterids=test_dataset.all_filtersIdx[idxs[idx]])
         rgb_map = rgb_map.clamp(0.0, 1.0)
 
-        rgb_map, depth_map = rgb_map.reshape(H, W, 3).cpu(), depth_map.reshape(H, W).cpu()
+        rgb_map, depth_map, spec_map = rgb_map.reshape(H, W, 3).cpu(), depth_map.reshape(H, W).cpu(), spec_map.reshape(H, W, args.spec_channel).cpu().numpy()
 
         depth_map, _ = visualize_depth_numpy(depth_map.numpy(),near_far)
         if len(test_dataset.all_rgbs):
@@ -79,6 +81,7 @@ def evaluation(test_dataset:LLFFDataset,tensorf, args, renderer, savePath=None, 
             # imageio.imwrite(f'{savePath}/{prtx}{idx:03d}.png', rgb_map)
             rgb_map = np.concatenate((rgb_map, depth_map), axis=1)
             imageio.imwrite(f'{savePath}/rgbd/{prtx}{idx:03d}.png', rgb_map)
+            sio.savemat(f'{savePath}/spec/{prtx}{idx:03d}.mat', {'spec': spec_map})
 
     # imageio.mimwrite(f'{savePath}/{prtx}video.mp4', np.stack(rgb_maps), fps=30, quality=10)
     # imageio.mimwrite(f'{savePath}/{prtx}depthvideo.mp4', np.stack(depth_maps), fps=30, quality=10)
