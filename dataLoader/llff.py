@@ -139,8 +139,6 @@ def _find_test_sample(mtx):
 
     return sample_mtx
 
-image_pick4depth = [0, 6, 12, 19]
-
 class LLFFDataset:
     white = T.ToTensor()(sio.loadmat('./myspecdata/decorner/meanwhite.mat')['data'])
     black = T.ToTensor()(sio.loadmat('./myspecdata/decorner/meanblack.mat')['data'])
@@ -252,25 +250,34 @@ class LLFFDataset:
         dists = np.sum(np.square(average_pose[:3, 3] - self.poses[:, :3, 3]), -1)
 
 
-    def load_img(self):
-        rays_savePath = Path(args.datadir) / f"rays_ndc{args.ndc_ray}_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
-        folders = [Path(args.datadir) / args.img_dir_name.replace('??', str(i)) 
-                   for i in range(args.angles)]
+    def _fix_sample_matrix(self):
         self.training_matrix = np.hstack((np.array([0] * args.angles)[:, np.newaxis], 
-                                          sio.loadmat(args.sample_matrix_dir)['mask'])) # first column is rgb image, which is needed
+                                          sio.loadmat(args.sample_matrix_dir)['mask'])) # first column is pure rgb image
+        self.training_matrix[:, args.colIdx4RGBTrain] = 1 # the column image is used for geometry training
         sample_matrix = self.training_matrix if self.split == 'train' else _find_test_sample(self.training_matrix)
         print(f'{sample_matrix.sum()} of images are loading...')
+
+        return sample_matrix
+
+
+    def load_img(self):
+        rays_savePath = Path(args.datadir) / f"rays_idgeo{args.colIdx4RGBTrain}_ndc{args.ndc_ray}_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
+        folders = [Path(args.datadir) / args.img_dir_name.replace('??', str(i)) 
+                   for i in range(args.angles)]
+        sample_matrix = self._fix_sample_matrix()
 
         W, H = self.img_wh
         # use first N_images-1 to train, the LAST is val
         if os.path.exists(rays_savePath):
             data = torch.load(rays_savePath)
-            all_rays, all_rgbs, all_poses, all_filtersIdx = data['rays'], data['rgbs'], data['poses'], data['filterids']
+            all_rays, all_rgbs, all_poses, all_filtersIdx, ids4shapeTrain = \
+                data['rays'], data['rgbs'], data['poses'], data['filterids'], data['id4geo']
         else:
             all_rays = []
             all_rgbs = []
             all_poses = []
             all_filtersIdx = []
+            ids4shapeTrain = []
             tensor_cropper = T.CenterCrop(args.crop_hw)
             tensor_resizer = T.Resize([H, W], antialias=True)
             for r, row in enumerate(sample_matrix):
@@ -278,8 +285,9 @@ class LLFFDataset:
                 for c, aimEle in enumerate(row):
                     if aimEle != 1:
                         continue
-                    # if i not in image_pick4depth:
-                    #     continue
+                    elif c == args.colIdx4RGBTrain:
+                        # it's for geometry training
+                        ids4shapeTrain.append(len(all_rays))
 
                     image_path = image_paths[c]
                     c2w = torch.FloatTensor(self.poses[r])
@@ -306,7 +314,8 @@ class LLFFDataset:
                 'rgbs': all_rgbs,
                 'rays': all_rays,
                 'poses': all_poses,
-                'filterids': all_filtersIdx
+                'filterids': all_filtersIdx,
+                'id4geo': ids4shapeTrain
             }, rays_savePath)
         print(f'{len(all_rgbs)} of images are loaded!')
 
