@@ -319,6 +319,8 @@ class LLFFDataset:
             }, rays_savePath)
         print(f'{len(all_rgbs)} of images are loaded!')
 
+        self.ids4shapeTrain = ids4shapeTrain
+        self.raysnum_oneimage = all_rays[0].shape[0]
         if not self.is_stack:
             self.all_rays = torch.cat(all_rays, 0) # (len(self.meta['frames])*h*w, 3)
             self.all_rgbs = torch.cat(all_rgbs, 0) # (len(self.meta['frames])*h*w,3)
@@ -445,3 +447,18 @@ class LLFFDataset:
     def transform(self, img, maxbits_num=65535.):
         return torch.FloatTensor(img / maxbits_num).permute(2, 0, 1)
 
+
+def get_dataset4RGBtraining(dataset: LLFFDataset):
+    allrays, allrgbs, allposesID, all_filterID = [], [], [], []
+    id_in_group = dataset.ids4shapeTrain
+    group_length = dataset.raysnum_oneimage
+
+    for i in id_in_group:
+        slc = slice(i * group_length, (i + 1) * group_length)
+
+        allrays.append(dataset.all_rays[slc])
+        allrgbs.append(dataset.all_rgbs[slc])
+        allposesID.append(dataset.all_poses[slc])
+        all_filterID.append(dataset.all_filtersIdx[slc])
+
+    return torch.cat(allrays), torch.cat(allrgbs), torch.cat(allposesID), torch.cat(all_filterID)

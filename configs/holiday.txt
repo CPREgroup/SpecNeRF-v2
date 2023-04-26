@@ -8,6 +8,7 @@ img_dir_name = pose??img
 sample_matrix_dir = ./find_filter/find_filter_res/fake.mat #GA_132_ep402_6.168_holiday.mat #GA_40_ep336_2.350_holiday.mat #GA_132_ep402_6.168_holiday.mat
 
 ndc_ray = 1
+rgb4shape
 depth_supervise
 depth_batchsize_endIter = [512, 300]
 distortion_loss

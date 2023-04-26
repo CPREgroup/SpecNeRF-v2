@@ -10,7 +10,7 @@ from renderer import *
 from utils import *
 from tensorboardX import SummaryWriter
 import datetime
-from dataLoader.llff import LLFFDataset
+from dataLoader.llff import LLFFDataset, get_dataset4RGBtraining
 from dataLoader import dataset_dict
 import sys
 
@@ -177,8 +177,11 @@ def reconstruction(args):
     torch.cuda.empty_cache()
     PSNRs,PSNRs_test = [],[0]
 
+    if args.rgb4shape:
+        allrays_4shape, allrgbs_4shape, allposesID_4shape, all_filterID_4shape = get_dataset4RGBtraining(train_dataset)
+        rgb4shapeSampler = SimpleSampler(allrays_4shape.shape[0], args.batch_size - args.depth_supervise * args.depth_batchsize_endIter[0])
+
     allrays, allrgbs, allposesID, all_filterID = train_dataset.all_rays, train_dataset.all_rgbs, train_dataset.all_poses, train_dataset.all_filtersIdx
-    
     if not args.ndc_ray:
         allrays, allrgbs, mask_filtered = tensorf.filtering_rays(allrays, allrgbs, bbox_only=True)
         allposesID, all_filterID = allposesID[mask_filtered], all_filterID[mask_filtered]
