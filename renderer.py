@@ -28,7 +28,7 @@ def OctreeRender_trilinear_fast(rays, tensorf, chunk=args.chunk_size, N_samples=
         dist_losses.append(dist_loss)
         spec_maps.append(spec_map)
     
-    return torch.cat(rgbs), None, torch.cat(depth_maps), None, None, torch.cat(dist_losses).mean(), spec_maps
+    return torch.cat(rgbs), None, torch.cat(depth_maps), None, None, torch.cat(dist_losses).mean(), torch.cat(spec_maps)
 
 @torch.no_grad()
 def evaluation(test_dataset:LLFFDataset,tensorf, args, renderer, savePath=None, N_vis=5, prtx='', N_samples=-1,
@@ -38,6 +38,13 @@ def evaluation(test_dataset:LLFFDataset,tensorf, args, renderer, savePath=None, 
     os.makedirs(savePath, exist_ok=True)
     os.makedirs(savePath+"/rgbd", exist_ok=True)
     os.makedirs(savePath+"/spec", exist_ok=True)
+    # delete old spec.mat
+    del_list = os.listdir(f'{savePath}/spec')
+    for f in del_list:
+        file_path = os.path.join(f'{savePath}/spec', f)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+
 
     try:
         tqdm._instances.clear()
@@ -81,6 +88,7 @@ def evaluation(test_dataset:LLFFDataset,tensorf, args, renderer, savePath=None, 
             # imageio.imwrite(f'{savePath}/{prtx}{idx:03d}.png', rgb_map)
             rgb_map = np.concatenate((rgb_map, depth_map), axis=1)
             imageio.imwrite(f'{savePath}/rgbd/{prtx}{idx:03d}.png', rgb_map)
+            # save spec.mat
             sio.savemat(f'{savePath}/spec/{prtx}{idx:03d}.mat', {'spec': spec_map})
 
     # imageio.mimwrite(f'{savePath}/{prtx}video.mp4', np.stack(rgb_maps), fps=30, quality=10)

@@ -157,7 +157,12 @@ def reconstruction(args):
                     shadingMode=args.shadingMode, alphaMask_thres=args.alpha_mask_thre, density_shift=args.density_shift, distance_scale=args.distance_scale,
                     pos_pe=args.pos_pe, view_pe=args.view_pe, fea_pe=args.fea_pe, featureC=args.featureC, step_ratio=args.step_ratio, fea2denseAct=args.fea2denseAct)
 
-    tensorf = tensorf.cuda()
+    tensorf: TensorVMSplit = tensorf.cuda()
+    # save parameters of render_fea and ssf
+    if args.reset_para:
+        render_para = tensorf.renderModule.state_dict()
+        ssf_para = tensorf.ssffcn.state_dict()
+
     grad_vars = tensorf.get_optparam_groups(args.lr_init, args.lr_basis)
     if args.lr_decay_iters > 0:
         lr_factor = args.lr_decay_target_ratio**(1/args.lr_decay_iters)
@@ -211,6 +216,10 @@ def reconstruction(args):
             ray_idx = trainingSampler.nextids()
             rays_train, rgb_train, poseID_train, filterID_train = allrays[ray_idx], allrgbs[ray_idx].to(device), allposesID[ray_idx], all_filterID[ray_idx]
 
+        if args.reset_para and args.rgb4shape_endIter == iteration:
+            tensorf.renderModule.load_state_dict(render_para)
+            tensorf.ssffcn.load_state_dict(ssf_para)
+
         if args.depth_supervise:
             depth_rays_idx = depthSampler.nextids()
             depth_rays_train, depth_wei_train, depth_val_train = \
@@ -250,12 +259,12 @@ def reconstruction(args):
             summary_writer.add_scalar('train/dist_loss', dist_loss, global_step=iteration)
 
 
-        loss = criterian(rgb_map, rgb_train)
-        psnrloss = loss.detach().item() # temp
+        rgbloss = (((rgb_map - rgb_train) / (rgb_map.detach() + 0.01)) ** 2).mean()
+        psnrloss = criterian(rgb_map, rgb_train).detach().item() # temp
 
 
         # loss
-        total_loss = loss + depth_loss + dist_loss
+        total_loss = rgbloss + depth_loss + dist_loss
 
         if Ortho_reg_weight > 0:
             loss_reg = tensorf.vector_comp_diffs()
@@ -283,7 +292,7 @@ def reconstruction(args):
         
         PSNRs.append(-10.0 * np.log(psnrloss) / np.log(10.0))
         summary_writer.add_scalar('train/PSNR', PSNRs[-1], global_step=iteration)
-        summary_writer.add_scalar('train/mse', psnrloss, global_step=iteration)
+        summary_writer.add_scalar('train/mse', rgbloss, global_step=iteration)
 
 
         for param_group in optimizer.param_groups:
@@ -297,7 +306,7 @@ def reconstruction(args):
                 f'Iteration {iteration:05d}:'
                 + f' train_psnr = {float(np.mean(PSNRs)):.2f}'
                 + f' test_psnr = {float(np.mean(PSNRs_test)):.2f}'
-                + f' mse = {psnrloss:.6f}'
+                + f' mse = {rgbloss:.6f}'
                 + f' depth_loss = {depth_loss_print:.6f}'
                 + f' dist_loss = {dist_loss:.6f}'
             )
