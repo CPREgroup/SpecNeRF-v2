@@ -145,6 +145,7 @@ def config_parser(cmd=None):
     parser.add_argument('--colIdx4RGBTrain', help='col index in fixed sample matrix',type=int,default=0)
     parser.add_argument('--lsc', action='store_true')
     parser.add_argument("--crop_hw", type=int, action="append")
+    parser.add_argument("--TV_weight_spec", type=float, default=0.1)
 
 
     if cmd is not None:

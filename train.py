@@ -160,6 +160,7 @@ def reconstruction(args):
     tensorf: TensorVMSplit = tensorf.cuda()
     # save parameters of render_fea and ssf
     if args.reset_para:
+        fea_decoder = tensorf.basis_mat.state_dict()
         render_para = tensorf.renderModule.state_dict()
         ssf_para = tensorf.ssffcn.state_dict()
 
@@ -217,8 +218,14 @@ def reconstruction(args):
             rays_train, rgb_train, poseID_train, filterID_train = allrays[ray_idx], allrgbs[ray_idx].to(device), allposesID[ray_idx], all_filterID[ray_idx]
 
         if args.reset_para and args.rgb4shape_endIter == iteration:
+            tensorf.basis_mat.load_state_dict(fea_decoder)
             tensorf.renderModule.load_state_dict(render_para)
             tensorf.ssffcn.load_state_dict(ssf_para)
+            #reset lr
+            lr_scale = 1 #0.1 ** (iteration / args.n_iters)
+            grad_vars = tensorf.get_optparam_groups(args.lr_init*lr_scale, args.lr_basis*lr_scale)
+            optimizer = torch.optim.Adam(grad_vars, betas=(0.9, 0.99))
+
 
         if args.depth_supervise:
             depth_rays_idx = depthSampler.nextids()
@@ -255,7 +262,7 @@ def reconstruction(args):
             depth_loss = depth_loss_print = 0
 
         if args.distortion_loss:
-            dist_loss = 0.01 * dist_loss
+            dist_loss = 0.1 * dist_loss
             summary_writer.add_scalar('train/dist_loss', dist_loss, global_step=iteration)
 
 
@@ -265,6 +272,13 @@ def reconstruction(args):
 
         # loss
         total_loss = rgbloss + depth_loss + dist_loss
+
+        if args.TV_weight_spec > 0:
+            loss_specTV = TVloss_Spectral(spec_map)
+            total_loss += loss_specTV * args.TV_weight_spec * lr_factor
+            summary_writer.add_scalar('train/specTV', loss_specTV.detach().item(), global_step=iteration)
+        else:
+            loss_specTV = 0
 
         if Ortho_reg_weight > 0:
             loss_reg = tensorf.vector_comp_diffs()
@@ -309,6 +323,7 @@ def reconstruction(args):
                 + f' mse = {rgbloss:.6f}'
                 + f' depth_loss = {depth_loss_print:.6f}'
                 + f' dist_loss = {dist_loss:.6f}'
+                + f' loss_specTV = {loss_specTV:.6f}'
             )
             PSNRs = []
 

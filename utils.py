@@ -196,6 +196,11 @@ class TVLoss(nn.Module):
         return t.size()[1]*t.size()[2]*t.size()[3]
 
 
+def TVloss_Spectral(specmap):
+    # specmap n x 31
+    return (((specmap[:, 1:] - specmap[:, :-1]) / (specmap[:, :-1].detach() + 1e-7)) ** 2).mean()
+
+
 
 import plyfile
 import skimage.measure
