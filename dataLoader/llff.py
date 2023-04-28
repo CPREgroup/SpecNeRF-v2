@@ -180,8 +180,8 @@ class LLFFDataset:
             return
         for i in range(0, args.filters + 1):
             fi = torch.FloatTensor(
-                np.diagonal(sio.loadmat(os.path.join(args.datadir, f'../filters/f_{i}.mat'))['filter'])
-            )[bandstart:]
+                np.diagonal(sio.loadmat(os.path.join(args.datadir, f'../{args.filters_folder}/f_{i}.mat'))['filter'])
+            )[bandstart: bandstart + args.spec_channel]
 
             cls.filters_back.append(fi)
         cls.filters_back = torch.stack(cls.filters_back)

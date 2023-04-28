@@ -1,7 +1,8 @@
 
 dataset_name = llff
 datadir = ./myspecdata/filter20_no1/holiday
-expname =  tensorf_holiday_spec28_largerRsetLR
+filters_folder = filters_measure
+expname =  tensorf_holiday_spec36
 angles = 12
 filters = 20
 img_dir_name = pose??img
@@ -14,8 +15,8 @@ depth_supervise
 depth_batchsize_endIter = [512, 300]
 distortion_loss
 lsc
-spec_channel = 28
-# band_start_idx = 3
+spec_channel = 36
+band_start_idx = 0
 colIdx4RGBTrain = 3
 downsample_train = 8
 crop_hw = [3000, 4300]
