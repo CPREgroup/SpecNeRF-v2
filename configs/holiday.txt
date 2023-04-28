@@ -1,7 +1,7 @@
 
 dataset_name = llff
 datadir = ./myspecdata/filter20_no1/holiday
-expname =  tensorf_holiday_spec28_nospecTV
+expname =  tensorf_holiday_spec28_largerRsetLR
 angles = 12
 filters = 20
 img_dir_name = pose??img
@@ -27,8 +27,8 @@ chunk_size = 2048
 
 N_voxel_init = 2097156 # 128**3
 N_voxel_final = 134217728 # 512**3
-upsamp_list = [8000, 10000, 12000, 14000, 19000] # [2000,3000,4000,5500,7000]
-update_AlphaMask_list = [8000,12000] # [2000,4000]
+upsamp_list = [4000, 6000, 9000, 12000, 15000] # [2000,3000,4000,5500,7000]
+update_AlphaMask_list = [5000, 8000] # [2000,4000]
 
 N_vis = -1
 vis_every = 500
@@ -40,8 +40,8 @@ render_test = 1
 render_train = 0
 render_path = 0
 
-n_lamb_sigma = [16,4,4]
-n_lamb_sh = [48,12,12]
+n_lamb_sigma = [10,7,7]
+n_lamb_sh = [36,18,18]
 
 shadingMode = MLP_Fea
 fea2denseAct = relu
@@ -55,5 +55,5 @@ L1_weight_rest = 4e-5
 rm_weight_mask_thre = 1e-4
 TV_weight_density = 0.8
 TV_weight_app = 0.5
-TV_weight_spec = 0
+TV_weight_spec = 0.2
 

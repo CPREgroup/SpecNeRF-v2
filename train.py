@@ -159,10 +159,10 @@ def reconstruction(args):
 
     tensorf: TensorVMSplit = tensorf.cuda()
     # save parameters of render_fea and ssf
-    if args.reset_para:
-        fea_decoder = tensorf.basis_mat.state_dict()
-        render_para = tensorf.renderModule.state_dict()
-        ssf_para = tensorf.ssffcn.state_dict()
+    # if args.reset_para:
+    #     fea_decoder = tensorf.basis_mat.state_dict()
+    #     render_para = tensorf.renderModule.state_dict()
+    #     ssf_para = tensorf.ssffcn.state_dict()
 
     grad_vars = tensorf.get_optparam_groups(args.lr_init, args.lr_basis)
     if args.lr_decay_iters > 0:
@@ -218,14 +218,16 @@ def reconstruction(args):
             rays_train, rgb_train, poseID_train, filterID_train = allrays[ray_idx], allrgbs[ray_idx].to(device), allposesID[ray_idx], all_filterID[ray_idx]
 
         if args.reset_para and args.rgb4shape_endIter == iteration:
-            tensorf.basis_mat.load_state_dict(fea_decoder)
-            tensorf.renderModule.load_state_dict(render_para)
-            tensorf.ssffcn.load_state_dict(ssf_para)
+            # tensorf.basis_mat.load_state_dict(fea_decoder)
+            # tensorf.renderModule.load_state_dict(render_para)
+            # tensorf.ssffcn.load_state_dict(ssf_para)
             #reset lr
-            lr_scale = 1 #0.1 ** (iteration / args.n_iters)
-            grad_vars = tensorf.get_optparam_groups(args.lr_init*lr_scale, args.lr_basis*lr_scale)
-            optimizer = torch.optim.Adam(grad_vars, betas=(0.9, 0.99))
-
+            for param_group in optimizer.param_groups:
+                if hasattr(param_group, 'myname'):
+                    if param_group['myname'] in ['appLine', 'appPlane']:
+                        param_group['lr'] = args.lr_init * 1.2
+                    else:
+                        param_group['lr'] = args.lr_basis * 1.2
 
         if args.depth_supervise:
             depth_rays_idx = depthSampler.nextids()
@@ -275,7 +277,7 @@ def reconstruction(args):
 
         if args.TV_weight_spec > 0:
             loss_specTV = TVloss_Spectral(spec_map)
-            total_loss += loss_specTV * args.TV_weight_spec * lr_factor
+            total_loss += loss_specTV * args.TV_weight_spec
             summary_writer.add_scalar('train/specTV', loss_specTV.detach().item(), global_step=iteration)
         else:
             loss_specTV = 0

@@ -162,14 +162,16 @@ class TensorVMSplit(TensorBase):
     
 
     def get_optparam_groups(self, lr_init_spatialxyz = 0.02, lr_init_network = 0.001):
-        grad_vars = [{'params': self.density_line, 'lr': lr_init_spatialxyz}, {'params': self.density_plane, 'lr': lr_init_spatialxyz},
-                     {'params': self.app_line, 'lr': lr_init_spatialxyz}, {'params': self.app_plane, 'lr': lr_init_spatialxyz},
-                         {'params': self.basis_mat.parameters(), 'lr':lr_init_network},
-                         {'params': self.depth_linear.parameters(), 'lr': lr_init_network},
-                         {'params': self.ssffcn.parameters(), 'lr': lr_init_network}
-                         ]
+        grad_vars = [{'params': self.density_line, 'lr': lr_init_spatialxyz}, 
+                     {'params': self.density_plane, 'lr': lr_init_spatialxyz},
+                    {'params': self.depth_linear.parameters(), 'lr': lr_init_network},
+                    {'params': self.app_line, 'lr': lr_init_spatialxyz, 'myname': 'appLine'}, 
+                    {'params': self.app_plane, 'lr': lr_init_spatialxyz, 'myname': 'appPlane'},
+                    {'params': self.basis_mat.parameters(), 'lr':lr_init_network, 'myname': 'basisMat'},
+                    {'params': self.ssffcn.parameters(), 'lr': lr_init_network, 'myname': 'ssffcn'}
+                    ]
         if isinstance(self.renderModule, torch.nn.Module):
-            grad_vars += [{'params':self.renderModule.parameters(), 'lr':lr_init_network}]
+            grad_vars += [{'params':self.renderModule.parameters(), 'lr':lr_init_network, 'myname': 'renderMdl'}]
         return grad_vars
 
 
