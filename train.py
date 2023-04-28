@@ -158,11 +158,6 @@ def reconstruction(args):
                     pos_pe=args.pos_pe, view_pe=args.view_pe, fea_pe=args.fea_pe, featureC=args.featureC, step_ratio=args.step_ratio, fea2denseAct=args.fea2denseAct)
 
     tensorf: TensorVMSplit = tensorf.cuda()
-    # save parameters of render_fea and ssf
-    # if args.reset_para:
-    #     fea_decoder = tensorf.basis_mat.state_dict()
-    #     render_para = tensorf.renderModule.state_dict()
-    #     ssf_para = tensorf.ssffcn.state_dict()
 
     grad_vars = tensorf.get_optparam_groups(args.lr_init, args.lr_basis)
     if args.lr_decay_iters > 0:
@@ -218,9 +213,6 @@ def reconstruction(args):
             rays_train, rgb_train, poseID_train, filterID_train = allrays[ray_idx], allrgbs[ray_idx].to(device), allposesID[ray_idx], all_filterID[ray_idx]
 
         if args.reset_para and args.rgb4shape_endIter == iteration:
-            # tensorf.basis_mat.load_state_dict(fea_decoder)
-            # tensorf.renderModule.load_state_dict(render_para)
-            # tensorf.ssffcn.load_state_dict(ssf_para)
             #reset lr
             for param_group in optimizer.param_groups:
                 if hasattr(param_group, 'myname'):
