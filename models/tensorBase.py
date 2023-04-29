@@ -152,12 +152,14 @@ class SSFFcn(torch.nn.Module):
             # nn.Linear(in_features=2*L, out_features=2*L),
             # nn.LeakyReLU(inplace=True),
             nn.Linear(in_features=2*L, out_features=out_dim),
-            nn.Sigmoid()
+            nn.ReLU(inplace=True)
         )
 
     def forward(self, x):
 
         y = self.layers(x)
+
+        y = y / y.max()
 
         return y
 
