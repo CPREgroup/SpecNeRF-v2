@@ -269,7 +269,11 @@ def reconstruction(args):
 
         if args.weight_squeezeSSF > 0:
             loss_ssf_small = torch.abs(ssf).sum()
-            total_loss += 
+            total_loss += loss_ssf_small * args.weight_squeezeSSF
+            summary_writer.add_scalar('train/smallSSF', loss_ssf_small.detach().item(), global_step=iteration)
+        else:
+            loss_ssf_small = 0
+
         if args.TV_weight_spec > 0:
             loss_specTV = TVloss_Spectral(spec_map)
             total_loss += loss_specTV * args.TV_weight_spec
@@ -321,6 +325,7 @@ def reconstruction(args):
                 + f' depth_loss = {depth_loss_print:.6f}'
                 + f' dist_loss = {dist_loss:.6f}'
                 + f' loss_specTV = {loss_specTV:.6f}'
+                + f' loss_ssf_small = {loss_ssf_small:.6f}'
             )
             PSNRs = []
 
