@@ -28,7 +28,7 @@ def OctreeRender_trilinear_fast(rays, tensorf, chunk=args.chunk_size, N_samples=
         dist_losses.append(dist_loss)
         spec_maps.append(spec_map)
     
-    return torch.cat(rgbs), None, torch.cat(depth_maps), None, None, torch.cat(dist_losses).mean(), torch.cat(spec_maps)
+    return torch.cat(rgbs), None, torch.cat(depth_maps), None, None, torch.cat(dist_losses).mean(), torch.cat(spec_maps), phi
 
 @torch.no_grad()
 def evaluation(test_dataset:LLFFDataset,tensorf, args, renderer, savePath=None, N_vis=5, prtx='', N_samples=-1,
