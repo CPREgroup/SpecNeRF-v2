@@ -1,6 +1,9 @@
-
-*.pyc
-log/
+__pycache__/
 data/
+log/
 myspecdata/
+myspecdata
+find_filter/
 find_filter
+start
+start.bat
