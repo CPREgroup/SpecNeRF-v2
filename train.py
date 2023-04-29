@@ -233,7 +233,7 @@ def reconstruction(args):
             filterID_train = torch.cat([filterID_train, fake_filterID])
 
         #rgb_map, alphas_map, depth_map, weights, uncertainty
-        rgb_map, alphas_map, depth_map, weights, uncertainty, dist_loss, spec_map = \
+        rgb_map, alphas_map, depth_map, weights, uncertainty, dist_loss, spec_map, ssf = \
             renderer(rays_train, tensorf, N_samples=nSamples, white_bg = white_bg, ndc_ray=ndc_ray, device=device, \
                      is_train=True, poseids=poseID_train, filterids=filterID_train)
 
@@ -267,6 +267,9 @@ def reconstruction(args):
         # loss
         total_loss = rgbloss + depth_loss + dist_loss
 
+        if args.weight_squeezeSSF > 0:
+            loss_ssf_small = torch.abs(ssf).sum()
+            total_loss += 
         if args.TV_weight_spec > 0:
             loss_specTV = TVloss_Spectral(spec_map)
             total_loss += loss_specTV * args.TV_weight_spec
@@ -325,7 +328,7 @@ def reconstruction(args):
         if iteration % args.vis_every == args.vis_every - 1 and args.N_vis!=0:
             saveModel(tensorf, f'{logfolder}/{iteration}_{args.expname}.pth')
             sio.savemat(f'{logfolder}/SSFs/ssf_{iteration}.mat',
-                        {'ssf': tensorf.ssffcn(tensorf.input_1D).cpu().detach().numpy()})
+                        {'ssf': ssf.cpu().detach().numpy()})
 
             PSNRs_test = evaluation(test_dataset,tensorf, args, renderer, f'{logfolder}/imgs_vis/', N_vis=args.N_vis,
                                     prtx=f'{iteration:06d}_', N_samples=nSamples, white_bg = white_bg, ndc_ray=ndc_ray, compute_extra_metrics=False)
