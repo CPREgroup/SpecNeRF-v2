@@ -240,8 +240,7 @@ def reconstruction(args):
         if args.depth_supervise:
             rgb_batch = args.batch_size - args.depth_batchsize_endIter[0]
             # disentangle
-            rgb_map = rgb_map[:rgb_batch]
-            rgb_pred = rgb_pred[:rgb_batch]
+            rgb_map, rgb_pred, rgb_resdual = rgb_map[:rgb_batch], rgb_pred[:rgb_batch], rgb_resdual[:rgb_batch]
             depth_map, depth_supervise = depth_map[:rgb_batch], depth_map[rgb_batch:]
 
             # depth map and loss
