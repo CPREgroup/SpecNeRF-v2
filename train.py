@@ -233,7 +233,7 @@ def reconstruction(args):
             filterID_train = torch.cat([filterID_train, fake_filterID])
 
         #rgb_map, alphas_map, depth_map, weights, uncertainty
-        rgb_map, alphas_map, depth_map, weights, uncertainty, dist_loss, spec_map, ssf, rgb_resdual = \
+        rgb_map, alphas_map, depth_map, weights, uncertainty, dist_loss, spec_map, ssf, rgb_resdual, rgb_pred = \
             renderer(rays_train, tensorf, N_samples=nSamples, white_bg = white_bg, ndc_ray=ndc_ray, device=device, \
                      is_train=True, poseids=poseID_train, filterids=filterID_train)
 
@@ -241,6 +241,7 @@ def reconstruction(args):
             rgb_batch = args.batch_size - args.depth_batchsize_endIter[0]
             # disentangle
             rgb_map = rgb_map[:rgb_batch]
+            rgb_pred = rgb_pred[:rgb_batch]
             depth_map, depth_supervise = depth_map[:rgb_batch], depth_map[rgb_batch:]
 
             # depth map and loss
@@ -262,7 +263,6 @@ def reconstruction(args):
 
         rgbloss = (((rgb_map - rgb_train) / (rgb_map.detach() + 0.01)) ** 2).mean()
         psnrloss = criterian(rgb_map, rgb_train).detach().item() # temp
-
 
         # loss
         total_loss = rgbloss + depth_loss + dist_loss

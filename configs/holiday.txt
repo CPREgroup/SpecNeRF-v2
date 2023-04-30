@@ -2,7 +2,7 @@
 dataset_name = llff
 datadir = ./myspecdata/filter20_no1/holiday
 filters_folder = filters_measure
-expname =  tensorf_holiday_spec36_compensate_squeezeReg
+expname =  tensorf_holiday_spec36_compensate_squeezeRegHarder
 angles = 12
 filters = 20
 img_dir_name = pose??img
@@ -57,4 +57,4 @@ rm_weight_mask_thre = 1e-4
 TV_weight_density = 0.8
 TV_weight_app = 0.5
 TV_weight_spec = 0.2
-weight_lowRGBres = 0.001
+weight_lowRGBres = 0.1
