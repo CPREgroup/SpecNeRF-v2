@@ -146,6 +146,7 @@ def config_parser(cmd=None):
     parser.add_argument('--lsc', action='store_true')
     parser.add_argument("--crop_hw", type=int, action="append")
     parser.add_argument("--TV_weight_spec", type=float, default=0.1)
+    parser.add_argument("--weight_lowRGBres", type=float, default=0.001)
     parser.add_argument("--filters_folder", type=str, default='filters')
 
 

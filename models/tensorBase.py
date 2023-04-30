@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from models.albedo_compensate import AlbedoCompensate
 from .sh import eval_sh_bases
 import numpy as np
 import time
@@ -215,6 +217,7 @@ class TensorBase(torch.nn.Module):
         self.ssffcn = SSFFcn(2, 3).to(device)
 
         self.depth_linear = Depth_linear().to(device)
+        self.rgb_resblock = AlbedoCompensate()
 
 
     def init_render_func(self, shadingMode, pos_pe, view_pe, fea_pe, featureC, device):
@@ -517,12 +520,14 @@ class TensorBase(torch.nn.Module):
         # prepare a ssf
         Phi = self.ssffcn(self.input_1D)  # self.Phi*self.Phi
 
-        rgb_map = (spec_map * filters) @ Phi
-        rgb_map = rgb_map.clamp(0,1)
+        # rgb rendering and compensating
+        rgb_map_pred = (spec_map * filters) @ Phi
+        rgb_resdual = self.rgb_resblock(rgb_map_pred, spec_map, filters)
+        rgb_map = (rgb_map_pred + rgb_resdual).clamp(0,1)
 
         # with torch.no_grad():
         depth_map = torch.sum(weight * z_vals, -1)
         # depth_map = depth_map + (1. - acc_map) * rays_chunk[..., -1]
 
-        return rgb_map, depth_map, dist_loss, spec_map, Phi # rgb, sigma, alpha, weight, bg_weight
+        return rgb_map, depth_map, dist_loss, spec_map, Phi, rgb_resdual # rgb, sigma, alpha, weight, bg_weight
 

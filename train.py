@@ -233,7 +233,7 @@ def reconstruction(args):
             filterID_train = torch.cat([filterID_train, fake_filterID])
 
         #rgb_map, alphas_map, depth_map, weights, uncertainty
-        rgb_map, alphas_map, depth_map, weights, uncertainty, dist_loss, spec_map, ssf = \
+        rgb_map, alphas_map, depth_map, weights, uncertainty, dist_loss, spec_map, ssf, rgb_resdual = \
             renderer(rays_train, tensorf, N_samples=nSamples, white_bg = white_bg, ndc_ray=ndc_ray, device=device, \
                      is_train=True, poseids=poseID_train, filterids=filterID_train)
 
@@ -266,6 +266,13 @@ def reconstruction(args):
 
         # loss
         total_loss = rgbloss + depth_loss + dist_loss
+
+        if args.weight_lowRGBres > 0:
+            loss_rgbResd = (rgb_resdual ** 2).mean()
+            total_loss += loss_rgbResd * args.weight_lowRGBres
+            summary_writer.add_scalar('train/rgbResd', loss_rgbResd.detach().item(), global_step=iteration)
+        else:
+            loss_rgbResd = 0
 
         if args.TV_weight_spec > 0:
             loss_specTV = TVloss_Spectral(spec_map)
@@ -318,6 +325,7 @@ def reconstruction(args):
                 + f' depth_loss = {depth_loss_print:.6f}'
                 + f' dist_loss = {dist_loss:.6f}'
                 + f' loss_specTV = {loss_specTV:.6f}'
+                + f' loss_rgbResd = {loss_rgbResd:.6f}'
             )
             PSNRs = []
 
