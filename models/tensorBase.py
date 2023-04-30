@@ -8,6 +8,7 @@ from opt import args
 from torch_efficient_distloss import eff_distloss, eff_distloss_native, flatten_eff_distloss
 from utils import norm0to1, positionencoding1D
 from dataLoader.llff import LLFFDataset
+from models.ssf import *
 
 def positional_encoding(positions, freqs):
     freq_bands = (2**torch.arange(freqs).float()).to(positions.device)  # (F,)
@@ -138,28 +139,6 @@ class MLPRender(torch.nn.Module):
 
         return rgb
 
-class SSFFcn(torch.nn.Module):
-    def __init__(self, L, out_dim):
-        super(SSFFcn, self).__init__()
-
-        self.layers = nn.Sequential(
-            nn.Linear(in_features=2 * L + 1, out_features=2*L),
-            nn.LeakyReLU(inplace=True),
-            nn.Linear(in_features=2*L, out_features=2*L),
-            nn.LeakyReLU(inplace=True),
-            nn.Linear(in_features=2*L, out_features=2*L),
-            nn.LeakyReLU(inplace=True),
-            # nn.Linear(in_features=2*L, out_features=2*L),
-            # nn.LeakyReLU(inplace=True),
-            nn.Linear(in_features=2*L, out_features=out_dim),
-            nn.Sigmoid()
-        )
-
-    def forward(self, x):
-
-        y = self.layers(x)
-
-        return y
 
 class Depth_linear(torch.nn.Module):
     def __init__(self):
@@ -210,9 +189,10 @@ class TensorBase(torch.nn.Module):
         self.shadingMode, self.pos_pe, self.view_pe, self.fea_pe, self.featureC = shadingMode, pos_pe, view_pe, fea_pe, featureC
         self.init_render_func(shadingMode, pos_pe, view_pe, fea_pe, featureC, device)
         
-        self.input_1D = torch.from_numpy(positionencoding1D(args.spec_channel, 2)).float().to(device)
-        # self.input_1D = positionalencoding1d_my(8, 31).to(device)
-        self.ssffcn = SSFFcn(2, 3).to(device)
+        if args.SSF_type == 'fcn':
+            self.ssfModule = SSFFcn(2, 3).to(device)
+        elif args.SSF_type == 'matrix':
+            self.ssfModule = SSFMatrix().to(device)
 
         self.depth_linear = Depth_linear().to(device)
 
@@ -515,7 +495,7 @@ class TensorBase(torch.nn.Module):
         spec_map = spec_map.clamp(0,1)
 
         # prepare a ssf
-        Phi = self.ssffcn(self.input_1D)  # self.Phi*self.Phi
+        Phi = self.ssfModule()  # self.Phi*self.Phi
 
         rgb_map = (spec_map * filters) @ Phi
         rgb_map = rgb_map.clamp(0,1)

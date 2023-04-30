@@ -147,6 +147,7 @@ def config_parser(cmd=None):
     parser.add_argument("--crop_hw", type=int, action="append")
     parser.add_argument("--TV_weight_spec", type=float, default=0.1)
     parser.add_argument("--filters_folder", type=str, default='filters')
+    parser.add_argument("--SSF_type", type=str, default='fcn', help='fcn or matrix')
 
 
     if cmd is not None:
