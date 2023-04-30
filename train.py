@@ -269,7 +269,7 @@ def reconstruction(args):
 
         if args.weight_squeezeSSF > 0:
             loss_ssf_small = torch.abs(ssf).sum()
-            total_loss += loss_ssf_small * args.weight_squeezeSSF
+            total_loss += loss_ssf_small * args.weight_squeezeSSF * lr_factor
             summary_writer.add_scalar('train/smallSSF', loss_ssf_small.detach().item(), global_step=iteration)
         else:
             loss_ssf_small = 0
