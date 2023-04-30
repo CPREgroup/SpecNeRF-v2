@@ -269,7 +269,8 @@ def reconstruction(args):
 
         if args.TV_weight4ssfMatrix > 0 and args.SSF_type == 'matrix':
             loss_ssfTV = TVloss_SSF(ssf)
-            total_loss += loss_ssfTV * args.TV_weight4ssfMatrix
+            ssf_squeeze = torch.abs(ssf).sum()
+            total_loss += loss_ssfTV * args.TV_weight4ssfMatrix + ssf_squeeze * 0.001
             summary_writer.add_scalar('train/ssfTV', loss_ssfTV.detach().item(), global_step=iteration)
         else:
             loss_ssfTV = 0
