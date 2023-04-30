@@ -267,6 +267,13 @@ def reconstruction(args):
         # loss
         total_loss = rgbloss + depth_loss + dist_loss
 
+        if args.TV_weight4ssfMatrix > 0 and args.SSF_type == 'matrix':
+            loss_ssfTV = TVloss_SSF(ssf)
+            total_loss += loss_ssfTV * args.TV_weight4ssfMatrix
+            summary_writer.add_scalar('train/ssfTV', loss_ssfTV.detach().item(), global_step=iteration)
+        else:
+            loss_ssfTV = 0
+
         if args.TV_weight_spec > 0:
             loss_specTV = TVloss_Spectral(spec_map)
             total_loss += loss_specTV * args.TV_weight_spec
@@ -318,6 +325,7 @@ def reconstruction(args):
                 + f' depth_loss = {depth_loss_print:.6f}'
                 + f' dist_loss = {dist_loss:.6f}'
                 + f' loss_specTV = {loss_specTV:.6f}'
+                + f' loss_ssfTV = {loss_ssfTV:.6f}'
             )
             PSNRs = []
 

@@ -2,7 +2,7 @@
 dataset_name = llff
 datadir = ./myspecdata/filter20_no1/holiday
 filters_folder = filters_measure
-expname =  tensorf_holiday_spec36
+expname =  tensorf_holiday_spec36_ssfMatrix
 angles = 12
 filters = 20
 img_dir_name = pose??img
@@ -15,6 +15,7 @@ depth_supervise
 depth_batchsize_endIter = [512, 300]
 distortion_loss
 lsc
+SSF_type = matrix
 spec_channel = 36
 band_start_idx = 0
 colIdx4RGBTrain = 3
@@ -57,4 +58,4 @@ rm_weight_mask_thre = 1e-4
 TV_weight_density = 0.8
 TV_weight_app = 0.5
 TV_weight_spec = 0.2
-
+TV_weight4ssfMatrix = 0.001

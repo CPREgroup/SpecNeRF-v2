@@ -200,6 +200,9 @@ def TVloss_Spectral(specmap):
     # specmap n x 31
     return (((specmap[:, 1:] - specmap[:, :-1]) / (specmap[:, :-1].detach() + 1e-7)) ** 2).mean()
 
+def TVloss_SSF(ssf):
+    # specmap n x 31
+    return (((ssf[1:, :] - ssf[:-1, :]) / (ssf[:-1, :].detach() + 1e-7)) ** 2).mean()
 
 
 import plyfile

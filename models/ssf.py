@@ -35,7 +35,7 @@ class SSFMatrix(torch.nn.Module):
     def __init__(self, *ags, **kags):
         super(SSFMatrix, self).__init__()
 
-        self.ssf = nn.Parameter(torch.random((args.spec_channel, 3)))
+        self.ssf = nn.Parameter(torch.rand((args.spec_channel, 3)))
 
     def forward(self, *ags, **kags):
         y = torch.sigmoid(self.ssf)
