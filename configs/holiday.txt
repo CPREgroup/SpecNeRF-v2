@@ -2,11 +2,11 @@
 dataset_name = llff
 datadir = ./myspecdata/filter20_no1/holiday
 filters_folder = filters_measure
-expname =  tensorf_holiday_spec36test
+expname =  ga132_holiday_spec36
 angles = 12
 filters = 20
 img_dir_name = pose??img
-sample_matrix_dir = ./find_filter/find_filter_res/fake.mat #GA_132_ep402_6.168_holiday.mat #GA_40_ep336_2.350_holiday.mat #GA_132_ep402_6.168_holiday.mat
+sample_matrix_dir = ./find_filter/find_filter_res/GA_132_ep402_6.168_holiday.mat #GA_132_ep402_6.168_holiday.mat #GA_40_ep336_2.350_holiday.mat #GA_132_ep402_6.168_holiday.mat
 
 ndc_ray = 1
 rgb4shape_endIter = 2000
@@ -57,4 +57,3 @@ rm_weight_mask_thre = 1e-4
 TV_weight_density = 0.8
 TV_weight_app = 0.5
 TV_weight_spec = 0.2
-
