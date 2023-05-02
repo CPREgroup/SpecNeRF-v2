@@ -147,6 +147,8 @@ def config_parser(cmd=None):
     parser.add_argument("--crop_hw", type=int, action="append")
     parser.add_argument("--TV_weight_spec", type=float, default=0.1)
     parser.add_argument("--filters_folder", type=str, default='filters')
+    parser.add_argument("--spec_channel_compensate", type=int, default=0,
+                        help='hidden channel in spec for nmf compensate')
 
 
     if cmd is not None:

@@ -69,7 +69,7 @@ class MLPRender_Fea(torch.nn.Module):
         self.feape = feape
         layer1 = torch.nn.Linear(self.in_mlpC, featureC)
         layer2 = torch.nn.Linear(featureC, featureC)
-        layer3 = torch.nn.Linear(featureC, args.spec_channel)
+        layer3 = torch.nn.Linear(featureC, args.spec_channel + args.spec_channel_compensate)
 
         self.mlp = torch.nn.Sequential(layer1, torch.nn.ReLU(inplace=True), layer2, torch.nn.ReLU(inplace=True), layer3)
         torch.nn.init.constant_(self.mlp[-1].bias, 0)
@@ -95,7 +95,7 @@ class MLPRender_PE(torch.nn.Module):
         self.pospe = pospe
         layer1 = torch.nn.Linear(self.in_mlpC, featureC)
         layer2 = torch.nn.Linear(featureC, featureC)
-        layer3 = torch.nn.Linear(featureC, args.spec_channel)
+        layer3 = torch.nn.Linear(featureC, args.spec_channel + args.spec_channel_compensate)
 
         self.mlp = torch.nn.Sequential(layer1, torch.nn.ReLU(inplace=True), 
                                        layer2, torch.nn.ReLU(inplace=True), 
@@ -123,7 +123,7 @@ class MLPRender(torch.nn.Module):
         
         layer1 = torch.nn.Linear(self.in_mlpC, featureC)
         layer2 = torch.nn.Linear(featureC, featureC)
-        layer3 = torch.nn.Linear(featureC,args.spec_channel)
+        layer3 = torch.nn.Linear(featureC,args.spec_channel + args.spec_channel_compensate)
 
         self.mlp = torch.nn.Sequential(layer1, torch.nn.ReLU(inplace=True), layer2, torch.nn.ReLU(inplace=True), layer3)
         torch.nn.init.constant_(self.mlp[-1].bias, 0)
@@ -477,7 +477,7 @@ class TensorBase(torch.nn.Module):
 
 
         sigma = torch.zeros(xyz_sampled.shape[:-1], device=xyz_sampled.device)
-        rgb = torch.zeros((*xyz_sampled.shape[:2], args.spec_channel), device=xyz_sampled.device)
+        rgb = torch.zeros((*xyz_sampled.shape[:2], args.spec_channel + args.spec_channel_compensate), device=xyz_sampled.device)
 
         if ray_valid.any():
             xyz_sampled = self.normalize_coord(xyz_sampled)
@@ -513,6 +513,9 @@ class TensorBase(torch.nn.Module):
         if white_bg or (is_train and torch.rand((1,))<0.5):
             spec_map = spec_map + (1. - acc_map[..., None])
         spec_map = spec_map.clamp(0,1)
+
+        if args.spec_channel_compensate > 0:
+            spec_map, spec_r_map = spec_map[:args.spec_channel], spec_map[args.spec_channel:]
 
         # prepare a ssf
         Phi = self.ssffcn(self.input_1D)  # self.Phi*self.Phi
