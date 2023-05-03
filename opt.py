@@ -132,6 +132,7 @@ def config_parser(cmd=None):
     
     parser.add_argument('--angles',type=int,default=10)
     parser.add_argument('--filters',type=int,default=20)
+    parser.add_argument('--factor4green',type=float,default=1.0)
     parser.add_argument('--img_dir_name',type=str,default='pose??img')
     parser.add_argument('--spec_channel', type=int, default=30)
     parser.add_argument('--depth_supervise', action='store_true')
@@ -147,6 +148,7 @@ def config_parser(cmd=None):
     parser.add_argument("--crop_hw", type=int, action="append")
     parser.add_argument("--TV_weight_spec", type=float, default=0.1)
     parser.add_argument("--filters_folder", type=str, default='filters')
+    parser.add_argument("--rgbScaleType", type=str, default='MAXBIT', help='MAXBIT or MAXRGB')
 
 
     if cmd is not None:
@@ -155,4 +157,6 @@ def config_parser(cmd=None):
         return parser.parse_args()
     
 args = config_parser()
+
+assert args.rgbScaleType in ['MAXBIT', 'MAXRGB'], 'wrong type in rgbScaleType'
 

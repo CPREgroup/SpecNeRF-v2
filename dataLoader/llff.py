@@ -261,7 +261,8 @@ class LLFFDataset:
 
 
     def load_img(self):
-        rays_savePath = Path(args.datadir) / f"rays_idgeo{args.colIdx4RGBTrain}_ndc{args.ndc_ray}_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
+        rays_savePath = Path(args.datadir) / f"rays_scaleType{args.rgbScaleType}_factor4green{args.factor4green}_idgeo{args.colIdx4RGBTrain}_\
+            ndc{args.ndc_ray}_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
         folders = [Path(args.datadir) / args.img_dir_name.replace('??', str(i)) 
                    for i in range(args.angles)]
         sample_matrix = self._fix_sample_matrix()
@@ -300,6 +301,8 @@ class LLFFDataset:
                         img = tensor_resizer(img)
 
                     img = img.view(3, -1).permute(1, 0)  # (h*w, 3) RGB
+                    if args.factor4green != 1:
+                        img[:, 1] = args.factor4green * img[:, 1]
                     all_rgbs.append(img)
 
                     rays_o, rays_d = get_rays(self.directions, c2w)  # both (h*w, 3)
@@ -310,6 +313,9 @@ class LLFFDataset:
                     all_poses.append(torch.LongTensor([[r]]).expand([rays_o.shape[0], -1]))
                     all_filtersIdx.append(torch.LongTensor([[c]]).expand([rays_o.shape[0], -1]))
 
+            if args.rgbScaleType == 'MAXRGB':
+                # scale the rgb value
+                all_rgbs /= torch.max(all_rgbs)
             torch.save({
                 'rgbs': all_rgbs,
                 'rays': all_rays,
@@ -445,7 +451,10 @@ class LLFFDataset:
         # return (img - 0.014) / cls.white
 
     def transform(self, img, maxbits_num=65535.):
-        return torch.FloatTensor(img / maxbits_num).permute(2, 0, 1)
+        if args.rgbScaleType == 'MAXBIT':
+            return torch.FloatTensor(img / maxbits_num).permute(2, 0, 1)
+        else:
+            return torch.FloatTensor(img).permute(2, 0, 1)
 
 
 def get_dataset4RGBtraining(dataset: LLFFDataset):
