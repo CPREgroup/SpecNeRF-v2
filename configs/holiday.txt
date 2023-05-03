@@ -21,6 +21,7 @@ colIdx4RGBTrain = 3
 downsample_train = 8
 crop_hw = [3000, 4300]
 factor4green = 0.25
+rgbScaleType = MAXRGB
 
 
 n_iters = 20000
