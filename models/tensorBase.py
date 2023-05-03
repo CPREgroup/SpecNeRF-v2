@@ -8,6 +8,7 @@ from opt import args
 from torch_efficient_distloss import eff_distloss, eff_distloss_native, flatten_eff_distloss
 from utils import norm0to1, positionencoding1D
 from dataLoader.llff import LLFFDataset
+from albedo_compensate import *
 
 def positional_encoding(positions, freqs):
     freq_bands = (2**torch.arange(freqs).float()).to(positions.device)  # (F,)
@@ -213,6 +214,8 @@ class TensorBase(torch.nn.Module):
         self.input_1D = torch.from_numpy(positionencoding1D(args.spec_channel, 2)).float().to(device)
         # self.input_1D = positionalencoding1d_my(8, 31).to(device)
         self.ssffcn = SSFFcn(2, 3).to(device)
+        if args.spec_channel_compensate > 0:
+            self.compensate_net = AlbedoCompensatePhi().to(device)
 
         self.depth_linear = Depth_linear().to(device)
 
@@ -516,11 +519,15 @@ class TensorBase(torch.nn.Module):
 
         if args.spec_channel_compensate > 0:
             spec_map, spec_r_map = spec_map[:args.spec_channel], spec_map[args.spec_channel:]
+            redudent_filter, redudent_ssf = self.compensate_net(filters)
+            rgb_r = (spec_r_map * redudent_filter) @ redudent_ssf
 
         # prepare a ssf
         Phi = self.ssffcn(self.input_1D)  # self.Phi*self.Phi
 
         rgb_map = (spec_map * filters) @ Phi
+        if args.spec_channel_compensate > 0:
+            rgb_map = args.compensate_weight * rgb_r + (1 - args.compensate_weight) * rgb_map
         rgb_map = rgb_map.clamp(0,1)
 
         # with torch.no_grad():
