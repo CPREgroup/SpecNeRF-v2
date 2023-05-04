@@ -313,9 +313,6 @@ class LLFFDataset:
                     all_poses.append(torch.LongTensor([[r]]).expand([rays_o.shape[0], -1]))
                     all_filtersIdx.append(torch.LongTensor([[c]]).expand([rays_o.shape[0], -1]))
 
-            if args.rgbScaleType == 'MAXRGB':
-                # scale the rgb value
-                all_rgbs /= torch.max(all_rgbs)
             torch.save({
                 'rgbs': all_rgbs,
                 'rays': all_rays,
@@ -337,6 +334,12 @@ class LLFFDataset:
             self.all_rgbs = torch.stack(all_rgbs, 0).reshape(-1,*self.img_wh[::-1], 3)  # (len(self.meta['frames]),h,w,3)
             self.all_poses = torch.stack(all_poses, 0)
             self.all_filtersIdx = torch.stack(all_filtersIdx, 0)
+
+        if args.rgbScaleType == 'MAXRGB':
+            # scale the rgb value
+            maxrgb = self.all_rgbs.max()
+            print('max rgb is :', maxrgb)
+            self.all_rgbs /= maxrgb
 
 
     def load_colmap_depth(self, poses, bds_raw, basedir, factor=8, bd_factor=.75):
@@ -454,7 +457,7 @@ class LLFFDataset:
         if args.rgbScaleType == 'MAXBIT':
             return torch.FloatTensor(img / maxbits_num).permute(2, 0, 1)
         else:
-            return torch.FloatTensor(img).permute(2, 0, 1)
+            return torch.FloatTensor(np.asarray(img, dtype=np.float32)).permute(2, 0, 1)
 
 
 def get_dataset4RGBtraining(dataset: LLFFDataset):
