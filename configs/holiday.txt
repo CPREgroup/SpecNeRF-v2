@@ -2,7 +2,7 @@
 dataset_name = llff
 datadir = ./myspecdata/filter20_no1/holiday
 filters_folder = filters_measure
-expname =  ga132_holiday_spec36_compd04_V10
+expname =  ga132_holiday_spec36_compd2_V4_Rreg0
 angles = 12
 filters = 20
 img_dir_name = pose??img
@@ -16,8 +16,10 @@ depth_batchsize_endIter = [512, 300]
 distortion_loss
 lsc
 spec_channel = 36
-spec_channel_compensate = 10
-compensate_weight = 0.04
+spec_channel_compensate = 4
+compensate_weight = 0.2
+rgb_r_reg_weight = 0
+
 band_start_idx = 0
 colIdx4RGBTrain = 3
 downsample_train = 8

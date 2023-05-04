@@ -148,6 +148,7 @@ def config_parser(cmd=None):
     parser.add_argument("--TV_weight_spec", type=float, default=0.1)
     parser.add_argument("--filters_folder", type=str, default='filters')
     parser.add_argument("--compensate_weight", type=float, default=0.1)
+    parser.add_argument("--rgb_r_reg_weight", type=float, default=0.1)
     parser.add_argument("--spec_channel_compensate", type=int, default=0,
                         help='hidden channel in spec for nmf compensate')
 
