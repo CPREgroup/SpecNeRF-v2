@@ -269,8 +269,10 @@ def reconstruction(args):
 
         if args.spec_channel_compensate > 0:
             loss_regRGBr = torch.abs(rgb_r).mean()
-            total_loss += loss_regRGBr * args.rgb_r_reg_weight
+            loss_compWei = torch.abs(tensorf.compensate_net.weight).sum()
+            total_loss += loss_regRGBr * args.rgb_r_reg_weight + loss_compWei * 0.1
             summary_writer.add_scalar('train/comp_reg', loss_regRGBr.detach().item(), global_step=iteration)
+            summary_writer.add_scalar('train/comp_alpha', tensorf.compensate_net.weight.detach().item(), global_step=iteration)
         else:
             loss_regRGBr = 0
 

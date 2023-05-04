@@ -527,7 +527,8 @@ class TensorBase(torch.nn.Module):
 
         rgb_map = (spec_map * filters) @ Phi
         if args.spec_channel_compensate > 0:
-            rgb_map = args.compensate_weight * rgb_r + (1 - args.compensate_weight) * rgb_map
+            # rgb_map = args.compensate_weight * rgb_r + (1 - args.compensate_weight) * rgb_map
+            rgb_map = self.compensate_net.weight * rgb_r + (1 - self.compensate_net.weight) * rgb_map
         rgb_map = rgb_map.clamp(0,1)
 
         # with torch.no_grad():

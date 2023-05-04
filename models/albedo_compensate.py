@@ -9,6 +9,7 @@ class AlbedoCompensatePhi(torch.nn.Module):
     def __init__(self, encoderHidden=64, L=2):
         super(AlbedoCompensatePhi, self).__init__()
 
+        self.weight = nn.Parameter(torch.FloatTensor([0.1]).cuda())
         self.pe = torch.from_numpy(positionencoding1D(args.spec_channel_compensate, L)).float().cuda()
 
         self.filter_encoder = nn.Sequential(
