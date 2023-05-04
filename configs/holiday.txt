@@ -2,7 +2,7 @@
 dataset_name = llff
 datadir = ./myspecdata/filter20_no1/holiday
 filters_folder = filters_measure
-expname =  ga132_holiday_spec36_fea80
+expname =  ga132_holiday_spec36_scaleRGBd2
 angles = 12
 filters = 20
 img_dir_name = pose??img
@@ -20,8 +20,8 @@ band_start_idx = 0
 colIdx4RGBTrain = 3
 downsample_train = 8
 crop_hw = [3000, 4300]
-factor4green = 0.25
-rgbScaleType = MAXRGB
+factor4green = 1
+rgbScaleType = MAXBIT
 
 
 n_iters = 20000

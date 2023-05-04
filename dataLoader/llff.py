@@ -261,8 +261,7 @@ class LLFFDataset:
 
 
     def load_img(self):
-        rays_savePath = Path(args.datadir) / f"rays_scaleType{args.rgbScaleType}_factor4green{args.factor4green}_idgeo{args.colIdx4RGBTrain}_\
-            ndc{args.ndc_ray}_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
+        rays_savePath = Path(args.datadir) / f"rays_scaleType{args.rgbScaleType}_idgeo{args.colIdx4RGBTrain}_ndc{args.ndc_ray}_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
         folders = [Path(args.datadir) / args.img_dir_name.replace('??', str(i)) 
                    for i in range(args.angles)]
         sample_matrix = self._fix_sample_matrix()
@@ -335,6 +334,7 @@ class LLFFDataset:
             self.all_poses = torch.stack(all_poses, 0)
             self.all_filtersIdx = torch.stack(all_filtersIdx, 0)
 
+        self.all_rgbs *= 0.2
         if args.rgbScaleType == 'MAXRGB':
             # scale the rgb value
             maxrgb = self.all_rgbs.max()
