@@ -2,7 +2,7 @@
 dataset_name = llff
 datadir = ./myspecdata/filter20_no1/holiday
 filters_folder = filters_measure
-expname =  ga132_holiday_spec36_fea80
+expname =  ga132_holiday_spec36_compd04_V10
 angles = 12
 filters = 20
 img_dir_name = pose??img
@@ -17,7 +17,7 @@ distortion_loss
 lsc
 spec_channel = 36
 spec_channel_compensate = 10
-compensate_weight = 0.1
+compensate_weight = 0.04
 band_start_idx = 0
 colIdx4RGBTrain = 3
 downsample_train = 8

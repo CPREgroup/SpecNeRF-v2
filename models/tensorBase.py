@@ -8,7 +8,7 @@ from opt import args
 from torch_efficient_distloss import eff_distloss, eff_distloss_native, flatten_eff_distloss
 from utils import norm0to1, positionencoding1D
 from dataLoader.llff import LLFFDataset
-from albedo_compensate import *
+from models.albedo_compensate import *
 
 def positional_encoding(positions, freqs):
     freq_bands = (2**torch.arange(freqs).float()).to(positions.device)  # (F,)
@@ -518,7 +518,7 @@ class TensorBase(torch.nn.Module):
         spec_map = spec_map.clamp(0,1)
 
         if args.spec_channel_compensate > 0:
-            spec_map, spec_r_map = spec_map[:args.spec_channel], spec_map[args.spec_channel:]
+            spec_map, spec_r_map = spec_map[:, :args.spec_channel], spec_map[:, args.spec_channel:]
             redudent_filter, redudent_ssf = self.compensate_net(filters)
             rgb_r = (spec_r_map * redudent_filter) @ redudent_ssf
 
