@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from models.compensateNet import FilterCompensateNet
 from .sh import eval_sh_bases
 import numpy as np
 import time
@@ -69,7 +71,7 @@ class MLPRender_Fea(torch.nn.Module):
         self.feape = feape
         layer1 = torch.nn.Linear(self.in_mlpC, featureC)
         layer2 = torch.nn.Linear(featureC, featureC)
-        layer3 = torch.nn.Linear(featureC, args.spec_channel)
+        layer3 = torch.nn.Linear(featureC, args.spec_wholechannel)
 
         self.mlp = torch.nn.Sequential(layer1, torch.nn.ReLU(inplace=True), layer2, torch.nn.ReLU(inplace=True), layer3)
         torch.nn.init.constant_(self.mlp[-1].bias, 0)
@@ -95,7 +97,7 @@ class MLPRender_PE(torch.nn.Module):
         self.pospe = pospe
         layer1 = torch.nn.Linear(self.in_mlpC, featureC)
         layer2 = torch.nn.Linear(featureC, featureC)
-        layer3 = torch.nn.Linear(featureC, args.spec_channel)
+        layer3 = torch.nn.Linear(featureC, args.spec_wholechannel)
 
         self.mlp = torch.nn.Sequential(layer1, torch.nn.ReLU(inplace=True), 
                                        layer2, torch.nn.ReLU(inplace=True), 
@@ -123,7 +125,7 @@ class MLPRender(torch.nn.Module):
         
         layer1 = torch.nn.Linear(self.in_mlpC, featureC)
         layer2 = torch.nn.Linear(featureC, featureC)
-        layer3 = torch.nn.Linear(featureC,args.spec_channel)
+        layer3 = torch.nn.Linear(featureC,args.spec_wholechannel)
 
         self.mlp = torch.nn.Sequential(layer1, torch.nn.ReLU(inplace=True), layer2, torch.nn.ReLU(inplace=True), layer3)
         torch.nn.init.constant_(self.mlp[-1].bias, 0)
@@ -210,10 +212,10 @@ class TensorBase(torch.nn.Module):
         self.shadingMode, self.pos_pe, self.view_pe, self.fea_pe, self.featureC = shadingMode, pos_pe, view_pe, fea_pe, featureC
         self.init_render_func(shadingMode, pos_pe, view_pe, fea_pe, featureC, device)
         
-        self.input_1D = torch.from_numpy(positionencoding1D(args.spec_channel, 2)).float().to(device)
+        self.input_1D = torch.from_numpy(positionencoding1D(args.spec_wholechannel, 2)).float().to(device)
         # self.input_1D = positionalencoding1d_my(8, 31).to(device)
         self.ssffcn = SSFFcn(2, 3).to(device)
-
+        self.compensate_net = FilterCompensateNet()
         self.depth_linear = Depth_linear().to(device)
 
 
@@ -477,7 +479,7 @@ class TensorBase(torch.nn.Module):
 
 
         sigma = torch.zeros(xyz_sampled.shape[:-1], device=xyz_sampled.device)
-        rgb = torch.zeros((*xyz_sampled.shape[:2], args.spec_channel), device=xyz_sampled.device)
+        rgb = torch.zeros((*xyz_sampled.shape[:2], args.spec_wholechannel), device=xyz_sampled.device)
 
         if ray_valid.any():
             xyz_sampled = self.normalize_coord(xyz_sampled)
@@ -517,7 +519,20 @@ class TensorBase(torch.nn.Module):
         # prepare a ssf
         Phi = self.ssffcn(self.input_1D)  # self.Phi*self.Phi
 
+        if args.spec_channel != args.spec_wholechannel:
+            # pick the middle ssf
+            ssf_startIdx = int((args.spec_wholechannel - args.spec_channel) / 2)
+            Phi, ssf_r = Phi[ssf_startIdx: ssf_startIdx + args.spec_channel, :], \
+                torch.cat([Phi[:ssf_startIdx, :], Phi[ssf_startIdx + args.spec_channel:, :]])
+            # split spec map
+            spec_map, spec_map_r = spec_map[:, :args.spec_channel], spec_map[:, args.spec_channel:]
+            # get filter
+            filter_r = self.compensate_net(filters)
+            rgb_r = (spec_map_r * filter_r) @ ssf_r
+
         rgb_map = (spec_map * filters) @ Phi
+        if args.spec_channel != args.spec_wholechannel:
+            rgb_map = rgb_map + rgb_r
         rgb_map = rgb_map.clamp(0,1)
 
         # with torch.no_grad():
