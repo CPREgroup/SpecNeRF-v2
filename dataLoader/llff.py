@@ -140,8 +140,8 @@ def _find_test_sample(mtx):
     return sample_mtx
 
 class LLFFDataset:
-    white = T.ToTensor()(sio.loadmat('./myspecdata/decorner/meanwhite.mat')['data'])
-    black = T.ToTensor()(sio.loadmat('./myspecdata/decorner/meanblack.mat')['data'])
+    white = T.ToTensor()(sio.loadmat('./myspecdata/decorner/meanwhite_max.mat')['data'])
+    # black = T.ToTensor()(sio.loadmat('./myspecdata/decorner/meanblack.mat')['data'])
     filters_back = []
     depth_mean = 1
 
