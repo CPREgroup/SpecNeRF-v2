@@ -162,7 +162,7 @@ class SSFFcn(torch.nn.Module):
         ssf = self.layers(x)
         coef = torch.clamp_min(self.coefficient, 0)
 
-        return ssf * coef
+        return ssf * (coef ** 2)
 
 class Depth_linear(torch.nn.Module):
     def __init__(self):
