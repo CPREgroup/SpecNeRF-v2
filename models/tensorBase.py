@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models.compensateNet import FilterCompensateNet
+from models.compensateNet import *
 from .sh import eval_sh_bases
 import numpy as np
 import time
@@ -216,6 +216,7 @@ class TensorBase(torch.nn.Module):
         # self.input_1D = positionalencoding1d_my(8, 31).to(device)
         self.ssffcn = SSFFcn(2, 3).to(device)
         self.compensate_net = FilterCompensateNet()
+        self.compensate_resnet = CompensateRegNet()
         self.depth_linear = Depth_linear().to(device)
 
 
@@ -522,15 +523,18 @@ class TensorBase(torch.nn.Module):
         if args.spec_channel != args.spec_wholechannel:
             # pick the middle ssf
             ssf_startIdx = int((args.spec_wholechannel - args.spec_channel) / 2)
-            Phi, ssf_r = Phi[ssf_startIdx: ssf_startIdx + args.spec_channel, :], \
+            ssf, ssf_r = Phi[ssf_startIdx: ssf_startIdx + args.spec_channel, :], \
                 torch.cat([Phi[:ssf_startIdx, :], Phi[ssf_startIdx + args.spec_channel:, :]])
             # split spec map
             spec_map, spec_map_r = spec_map[:, :args.spec_channel], spec_map[:, args.spec_channel:]
             # get filter
             filter_r = self.compensate_net(filters)
             rgb_r = (spec_map_r * filter_r) @ ssf_r
+            rgb_r = self.compensate_resnet(rgb_r)
+        else:
+            rgb_r = 0
 
-        rgb_map = (spec_map * filters) @ Phi
+        rgb_map = (spec_map * filters) @ ssf
         if args.spec_channel != args.spec_wholechannel:
             rgb_map = rgb_map + rgb_r
         rgb_map = rgb_map.clamp(0,1)
@@ -539,5 +543,5 @@ class TensorBase(torch.nn.Module):
         depth_map = torch.sum(weight * z_vals, -1)
         # depth_map = depth_map + (1. - acc_map) * rays_chunk[..., -1]
 
-        return rgb_map, depth_map, dist_loss, spec_map, Phi # rgb, sigma, alpha, weight, bg_weight
+        return rgb_map, depth_map, dist_loss, spec_map, Phi, rgb_r # rgb, sigma, alpha, weight, bg_weight
 

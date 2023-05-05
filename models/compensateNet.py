@@ -29,3 +29,27 @@ class FilterCompensateNet(torch.nn.Module):
 
         return redudent_filter
 
+
+class CompensateRegNet(torch.nn.Module):
+    def __init__(self, encoderHidden=64):
+        super(CompensateRegNet, self).__init__()
+
+        # self.pe = torch.from_numpy(positionencoding1D(args.spec_channel_compensate, L)).float().cuda()
+
+        self.resblock = nn.Sequential(
+            nn.Linear(in_features=3, out_features=encoderHidden),
+            nn.LeakyReLU(inplace=True),
+            nn.Linear(in_features=encoderHidden, out_features=encoderHidden),
+            nn.LeakyReLU(inplace=True),
+            nn.Linear(in_features=encoderHidden, out_features=encoderHidden),
+            nn.LeakyReLU(inplace=True),
+            nn.Linear(in_features=encoderHidden, out_features=3),
+            nn.Sigmoid()
+        )
+
+
+    def forward(self, rgb):
+        rgb_res = self.resblock(rgb)
+
+        return rgb + rgb_res
+

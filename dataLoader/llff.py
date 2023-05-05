@@ -261,7 +261,7 @@ class LLFFDataset:
 
 
     def load_img(self):
-        rays_savePath = Path(args.datadir) / f"rays_scaleTypeMAXBIT_idgeo{args.colIdx4RGBTrain}_ndc{args.ndc_ray}_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
+        rays_savePath = Path(args.datadir) / f"rays_idgeo{args.colIdx4RGBTrain}_ndc{args.ndc_ray}_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
         folders = [Path(args.datadir) / args.img_dir_name.replace('??', str(i)) 
                    for i in range(args.angles)]
         sample_matrix = self._fix_sample_matrix()

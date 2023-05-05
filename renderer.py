@@ -13,22 +13,23 @@ def OctreeRender_trilinear_fast(rays, tensorf, chunk=args.chunk_size, N_samples=
     poseids, filterids = kargs['poseids'], kargs['filterids']
     filters = LLFFDataset.filters_back
 
-    rgbs, alphas, depth_maps, weights, uncertainties, dist_losses, spec_maps = [], [], [], [], [], [], []
+    rgbs, alphas, depth_maps, weights, uncertainties, dist_losses, spec_maps, rgb_rs = [], [], [], [], [], [], [], []
     N_rays_all = rays.shape[0]
     for chunk_idx in range(N_rays_all // chunk + int(N_rays_all % chunk > 0)):
         rays_chunk = rays[chunk_idx * chunk:(chunk_idx + 1) * chunk].to(device)
         poseids_chunk = poseids[chunk_idx * chunk:(chunk_idx + 1) * chunk].to(device)
         filters_chunk = filters[filterids[chunk_idx * chunk:(chunk_idx + 1) * chunk].reshape(-1)].to(device)
     
-        rgb_map, depth_map, dist_loss, spec_map, phi = tensorf(rays_chunk, poseids_chunk, filters_chunk, is_train=is_train, white_bg=white_bg, \
+        rgb_map, depth_map, dist_loss, spec_map, phi, rgb_r = tensorf(rays_chunk, poseids_chunk, filters_chunk, is_train=is_train, white_bg=white_bg, \
                                                 ndc_ray=ndc_ray, N_samples=N_samples)
 
         rgbs.append(rgb_map)
         depth_maps.append(depth_map)
         dist_losses.append(dist_loss)
         spec_maps.append(spec_map)
+        rgb_rs.append(rgb_r)
     
-    return torch.cat(rgbs), None, torch.cat(depth_maps), None, None, torch.cat(dist_losses).mean(), torch.cat(spec_maps), phi
+    return torch.cat(rgbs), None, torch.cat(depth_maps), None, None, torch.cat(dist_losses).mean(), torch.cat(spec_maps), phi, torch.cat(rgb_rs)
 
 @torch.no_grad()
 def evaluation(test_dataset:LLFFDataset,tensorf, args, renderer, savePath=None, N_vis=5, prtx='', N_samples=-1,
@@ -59,7 +60,7 @@ def evaluation(test_dataset:LLFFDataset,tensorf, args, renderer, savePath=None, 
         W, H = test_dataset.img_wh
         rays = samples.view(-1,samples.shape[-1])
 
-        rgb_map, _, depth_map, _, _, _, spec_map, _ = \
+        rgb_map, _, depth_map, _, _, _, spec_map, _, rgb_r = \
             renderer(rays, tensorf, N_samples=N_samples, ndc_ray=ndc_ray, white_bg = white_bg, device=device, \
                      poseids=test_dataset.all_poses[idxs[idx]], filterids=test_dataset.all_filtersIdx[idxs[idx]])
         rgb_map = rgb_map.clamp(0.0, 1.0)
@@ -132,7 +133,7 @@ def evaluation_path(test_dataset,tensorf, c2ws, renderer, savePath=None, N_vis=5
             rays_o, rays_d = ndc_rays_blender(H, W, test_dataset.focal[0], 1.0, rays_o, rays_d)
         rays = torch.cat([rays_o, rays_d], 1)  # (h*w, 6)
 
-        rgb_map, _, depth_map, _, _, _, spec_map, _ = \
+        rgb_map, _, depth_map, _, _, _, spec_map, _, rgb_r = \
             renderer(rays, tensorf, N_samples=N_samples, ndc_ray=ndc_ray, white_bg = white_bg, device=device, \
                      poseids=ones_filtersIdx.expand((rays.shape[0], -1)), filterids=ones_filtersIdx.expand((rays.shape[0], -1)))
         rgb_map = rgb_map.clamp(0.0, 1.0)
