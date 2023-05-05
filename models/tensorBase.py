@@ -144,6 +144,8 @@ class SSFFcn(torch.nn.Module):
     def __init__(self, L, out_dim):
         super(SSFFcn, self).__init__()
 
+        self.coefficient = nn.Parameter(torch.FloatTensor([1, 1, 1]).reshape([1, 3]).cuda())
+
         self.layers = nn.Sequential(
             nn.Linear(in_features=2 * L + 1, out_features=2*L),
             nn.LeakyReLU(inplace=True),
@@ -159,9 +161,10 @@ class SSFFcn(torch.nn.Module):
 
     def forward(self, x):
 
-        y = self.layers(x)
+        ssf = self.layers(x)
+        coef = torch.clamp_min(self.coefficient, 0)
 
-        return y
+        return ssf * coef
 
 class Depth_linear(torch.nn.Module):
     def __init__(self):
