@@ -66,7 +66,11 @@ def evaluation(test_dataset:LLFFDataset,tensorf, args, renderer, savePath=None, 
 
         rgb_map, depth_map, spec_map = rgb_map.reshape(H, W, args.observation_channel).cpu(), depth_map.reshape(H, W).cpu(), spec_map.reshape(H, W, args.spec_channel).cpu().numpy()
 
-        depth_map, _ = visualize_depth_numpy(depth_map.numpy(),near_far)
+        if rgb_map.shape[-1] != 1:
+            depth_map, _ = visualize_depth_numpy(depth_map.numpy(),near_far)
+        else:
+            depth_map = visualize_depth_numpy_mono(depth_map.numpy(),near_far)
+
         if len(test_dataset.all_rgbs):
             gt_rgb = test_dataset.all_rgbs[idxs[idx]].view(H, W, args.observation_channel)
             loss = torch.mean((rgb_map - gt_rgb) ** 2)
@@ -137,9 +141,12 @@ def evaluation_path(test_dataset,tensorf, c2ws, renderer, savePath=None, N_vis=5
                      poseids=ones_filtersIdx.expand((rays.shape[0], -1)), filterids=ones_filtersIdx.expand((rays.shape[0], -1)))
         rgb_map = rgb_map.clamp(0.0, 1.0)
 
-        rgb_map, depth_map = rgb_map.reshape(H, W, 3).cpu(), depth_map.reshape(H, W).cpu()
+        rgb_map, depth_map = rgb_map.reshape(H, W, args.observation_channel).cpu(), depth_map.reshape(H, W).cpu()
 
-        depth_map, _ = visualize_depth_numpy(depth_map.numpy(),near_far)
+        if rgb_map.shape[-1] != 1:
+            depth_map, _ = visualize_depth_numpy(depth_map.numpy(),near_far)
+        else:
+            depth_map = visualize_depth_numpy_mono(depth_map.numpy(),near_far)
 
         rgb_map = (rgb_map.numpy() * 255).astype('uint8')
         # rgb_map = np.concatenate((rgb_map, depth_map), axis=1)

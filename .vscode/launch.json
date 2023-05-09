@@ -13,7 +13,7 @@
             "justMyCode": true,
             "args": [
                 "--config",
-                "configs\\holiday.txt"
+                "configs\\mydesk.txt"
             ]
         }
     ]

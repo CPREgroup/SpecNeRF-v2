@@ -2,9 +2,10 @@
 dataset_name = llff
 datadir = ./myspecdata/filter19/mydesk
 filters_folder = filters_measure
-expname =  ga70_mydesk_spec36
+expname =  ga70_mydesk_spec36_lowerTV
 angles = 9
 filters = 19
+img_ext = tiff
 img_dir_name = pose??img
 sample_matrix_dir = ./find_filter/find_filter_res/GA_70_ep694_4.08_mydesk.mat
 
@@ -14,7 +15,7 @@ reset_para
 # depth_supervise
 depth_batchsize_endIter = [512, 300]
 distortion_loss
-lsc
+# lsc
 spec_channel = 36
 observation_channel = 1
 band_start_idx = 0
@@ -57,4 +58,4 @@ L1_weight_rest = 4e-5
 rm_weight_mask_thre = 1e-4
 TV_weight_density = 0.8
 TV_weight_app = 0.5
-TV_weight_spec = 0.2
+TV_weight_spec = 0.005

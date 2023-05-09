@@ -1,5 +1,6 @@
 from pathlib import Path
 import traceback
+import cv2
 import torch
 from torch.utils.data import Dataset
 import glob
@@ -328,7 +329,7 @@ class LLFFDataset:
             self.all_filtersIdx = torch.cat(all_filtersIdx, 0)
         else:
             self.all_rays = torch.stack(all_rays, 0)   # (len(self.meta['frames]),h*w, 3)
-            self.all_rgbs = torch.stack(all_rgbs, 0).reshape(-1,*self.img_wh[::-1], 3)  # (len(self.meta['frames]),h,w,3)
+            self.all_rgbs = torch.stack(all_rgbs, 0).reshape(-1,*self.img_wh[::-1], args.observation_channel)  # (len(self.meta['frames]),h,w,3)
             self.all_poses = torch.stack(all_poses, 0)
             self.all_filtersIdx = torch.stack(all_filtersIdx, 0)
 
@@ -424,8 +425,8 @@ class LLFFDataset:
         LLFFDataset.depth_mean = self.depth_value.mean()
 
     def read_non_raw(self, image_path):
-        is_raw = image_path.endswith('.dng')
-        if is_raw:
+        is_dng = image_path.endswith('.dng')
+        if is_dng:
             try:
                 with rawpy.imread(image_path) as raw:
                     rgb = raw.postprocess(user_wb=(1, 1, 1, 1), output_color=ColorSpace.raw,
@@ -433,6 +434,10 @@ class LLFFDataset:
             except:
                 print(traceback.format_exc())
             img = self.transform(rgb)   # c h w [0~2^16]
+        elif image_path.endswith('.tiff'):
+            rgb = Image.open(image_path)
+            im_arr = np.array(rgb, dtype=np.uint16)[..., np.newaxis]
+            img = self.transform(im_arr)   # c h w [0-1]
         else:
             img = Image.open(image_path).convert('RGB')
             img = self.transform(img, 255.)   # c h w [0-1]

@@ -16,7 +16,7 @@ import os
 import numpy as np
 # white = sio.loadmat('./myspecdata/decorner/meanwhite.mat')['data'] ** (1 / 2.4)
 # black = sio.loadmat('./myspecdata/decorner/meanblack.mat')['data']
-folder = r'myspecdata\filter19\mydesk\filter0img\images'
+folder = r'myspecdata\filter19\mydesk\pose0img\images'
 files = os.scandir(folder)
 
 
@@ -30,7 +30,7 @@ for f in files:
     rgb = rgb.astype(np.uint8)
 
     aimfile = f'{aimfolder}\\{f.name[:-5]}.jpg'
-    cv2.imwrite(aimfile, rgb)
+    # cv2.imwrite(aimfile, rgb)
 
     print('saved ', aimfile)
 
