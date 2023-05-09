@@ -299,7 +299,7 @@ class LLFFDataset:
                     if self.downsample != 1.0:
                         img = tensor_resizer(img)
 
-                    img = img.view(3, -1).permute(1, 0)  # (h*w, 3) RGB
+                    img = img.view(args.observation_channel, -1).permute(1, 0)  # (h*w, 3) RGB
                     all_rgbs.append(img)
 
                     rays_o, rays_d = get_rays(self.directions, c2w)  # both (h*w, 3)

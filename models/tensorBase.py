@@ -212,7 +212,7 @@ class TensorBase(torch.nn.Module):
         
         self.input_1D = torch.from_numpy(positionencoding1D(args.spec_channel, 2)).float().to(device)
         # self.input_1D = positionalencoding1d_my(8, 31).to(device)
-        self.ssffcn = SSFFcn(2, 3).to(device)
+        self.ssffcn = SSFFcn(2, args.observation_channel).to(device)
 
         self.depth_linear = Depth_linear().to(device)
 

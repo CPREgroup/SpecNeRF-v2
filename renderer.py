@@ -64,11 +64,11 @@ def evaluation(test_dataset:LLFFDataset,tensorf, args, renderer, savePath=None, 
                      poseids=test_dataset.all_poses[idxs[idx]], filterids=test_dataset.all_filtersIdx[idxs[idx]])
         rgb_map = rgb_map.clamp(0.0, 1.0)
 
-        rgb_map, depth_map, spec_map = rgb_map.reshape(H, W, 3).cpu(), depth_map.reshape(H, W).cpu(), spec_map.reshape(H, W, args.spec_channel).cpu().numpy()
+        rgb_map, depth_map, spec_map = rgb_map.reshape(H, W, args.observation_channel).cpu(), depth_map.reshape(H, W).cpu(), spec_map.reshape(H, W, args.spec_channel).cpu().numpy()
 
         depth_map, _ = visualize_depth_numpy(depth_map.numpy(),near_far)
         if len(test_dataset.all_rgbs):
-            gt_rgb = test_dataset.all_rgbs[idxs[idx]].view(H, W, 3)
+            gt_rgb = test_dataset.all_rgbs[idxs[idx]].view(H, W, args.observation_channel)
             loss = torch.mean((rgb_map - gt_rgb) ** 2)
             PSNRs.append(-10.0 * np.log(loss.item()) / np.log(10.0))
 

@@ -8,28 +8,38 @@
 
 # pass
 
-# import cv2
-# import rawpy
-# from rawpy._rawpy import ColorSpace
-# import scipy.io as sio
-# import os
-# import numpy as np
+import cv2
+import rawpy
+from rawpy._rawpy import ColorSpace
+import scipy.io as sio
+import os
+import numpy as np
 # white = sio.loadmat('./myspecdata/decorner/meanwhite.mat')['data'] ** (1 / 2.4)
 # black = sio.loadmat('./myspecdata/decorner/meanblack.mat')['data']
-# folder = r'myspecdata\filter20_no1\holiday\filter3img\images'
-# files = os.scandir(folder)
+folder = r'myspecdata\filter19\mydesk\filter0img\images'
+files = os.scandir(folder)
 
 
-# aimfolder = r'myspecdata\filter20_no1\holiday\images'
-# if not os.path.exists(aimfolder):
-#     os.mkdir(aimfolder)
+aimfolder = r'myspecdata\filter19\mydesk\images'
+if not os.path.exists(aimfolder):
+    os.mkdir(aimfolder)
+
+# tiff
+for f in files:
+    rgb = cv2.imread(f.path)
+    rgb = rgb.astype(np.uint8)
+
+    aimfile = f'{aimfolder}\\{f.name[:-5]}.jpg'
+    cv2.imwrite(aimfile, rgb)
+
+    print('saved ', aimfile)
 
 # for f in files:
 #     with rawpy.imread(f.path) as raw:
-#         rgb = raw.postprocess(output_color=ColorSpace.sRGB) / 255.0
-#         rgb = np.minimum(np.maximum(rgb - 0.014, 0.0) / white[..., np.newaxis], 1)
+#         rgb = raw.postprocess(output_color=ColorSpace.sRGB)
+#         # rgb = np.minimum(np.maximum(rgb - 0.014, 0.0) / white[..., np.newaxis], 1)
 
-#         rgb *= 255.0
+#         # rgb *= 255.0
 #         rgb = rgb.astype(np.uint8)
 #         rgb = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
 
