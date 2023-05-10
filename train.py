@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../myutils/')
 
 import os
 from tqdm.auto import tqdm
@@ -12,7 +14,6 @@ from tensorboardX import SummaryWriter
 import datetime
 from dataLoader.llff import LLFFDataset, get_dataset4RGBtraining
 from dataLoader import dataset_dict
-import sys
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -170,6 +171,7 @@ def reconstruction(args):
     
     optimizer = torch.optim.Adam(grad_vars, betas=(0.9,0.99))
     criterian = torch.nn.MSELoss()
+    specfix = SpectralFix()
 
     #linear in logrithmic space
     N_voxel_list = (torch.round(torch.exp(torch.linspace(np.log(args.N_voxel_init), np.log(args.N_voxel_final), len(upsamp_list)+1))).long()).tolist()[1:]
@@ -271,6 +273,10 @@ def reconstruction(args):
             loss_specTV = TVloss_Spectral(spec_map)
             total_loss += loss_specTV * args.TV_weight_spec
             summary_writer.add_scalar('train/specTV', loss_specTV.detach().item(), global_step=iteration)
+
+            specfix_loss = specfix(spec_map)
+            total_loss += specfix_loss
+            summary_writer.add_scalar('train/specFIX', specfix_loss.detach().item(), global_step=iteration)
         else:
             loss_specTV = 0
 

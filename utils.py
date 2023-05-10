@@ -4,6 +4,8 @@ from PIL import Image
 import torchvision.transforms as T
 import torch.nn.functional as F
 import scipy.signal
+from opt import args
+from myutils import normalization
 
 mse2psnr = lambda x : -10. * torch.log(x) / torch.log(torch.Tensor([10.]))
 
@@ -217,9 +219,19 @@ class TVLoss(nn.Module):
 
 def TVloss_Spectral(specmap):
     # specmap n x 31
-    shifted = torch.roll(specmap, shifts=1, dims=1)
-    return (((shifted - specmap) / (specmap.detach() + 1e-7)) ** 2).mean()
+    # shifted = torch.roll(specmap, shifts=1, dims=1)
+    # return (((shifted - specmap) / (specmap.detach() + 1e-7)) ** 2).mean()
+    return (((specmap[:, 1:] - specmap[:, :-1]) / (specmap[:, :-1].detach() + 1e-7)) ** 2).mean()
 
+class SpectralFix:
+    def __init__(self) -> None:
+        weight, _ = normalization(0.1 * torch.exp(torch.arange(1-args.spec_channel, 1)))
+        weight[weight < 0.05] = 0
+        self.weight = weight.cuda()
+
+    def __call__(self, specmap):
+        fixed = (self.weight * specmap).abs().mean()
+        return fixed
 
 
 import plyfile
