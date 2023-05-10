@@ -217,7 +217,8 @@ class TVLoss(nn.Module):
 
 def TVloss_Spectral(specmap):
     # specmap n x 31
-    return (((specmap[:, 1:] - specmap[:, :-1]) / (specmap[:, :-1].detach() + 1e-7)) ** 2).mean()
+    shifted = torch.roll(specmap, shifts=1, dims=1)
+    return (((shifted - specmap) / (specmap.detach() + 1e-7)) ** 2).mean()
 
 
 
