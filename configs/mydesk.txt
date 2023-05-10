@@ -2,7 +2,7 @@
 dataset_name = llff
 datadir = ./myspecdata/filter19/mydesk
 filters_folder = filters_measure
-expname =  ga70_mydesk_spec36_shifted_handcraftPrior
+expname =  ga70_mydesk_spec36_specfix_largerWeight
 angles = 9
 filters = 19
 img_ext = tiff

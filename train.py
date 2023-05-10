@@ -275,7 +275,7 @@ def reconstruction(args):
             summary_writer.add_scalar('train/specTV', loss_specTV.detach().item(), global_step=iteration)
 
             specfix_loss = specfix(spec_map)
-            total_loss += specfix_loss
+            total_loss += specfix_loss * 100
             summary_writer.add_scalar('train/specFIX', specfix_loss.detach().item(), global_step=iteration)
         else:
             loss_specTV = 0
