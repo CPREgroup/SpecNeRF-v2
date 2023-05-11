@@ -226,7 +226,7 @@ def TVloss_Spectral(specmap):
 class SpectralFix:
     def __init__(self) -> None:
         weight, _ = normalization(0.1 * torch.exp(torch.arange(1-args.spec_channel, 1)))
-        weight[weight < 0.05] = 0
+        weight[:args.spec_channel - 3] = 0
         self.weight = weight.cuda()
 
     def __call__(self, specmap):

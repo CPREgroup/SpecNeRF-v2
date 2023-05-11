@@ -2,12 +2,12 @@
 dataset_name = llff
 datadir = ./myspecdata/filter19/mydesk
 filters_folder = filters_measure
-expname =  ga70_mydesk_spec36_specfix_largerWeight
+expname =  all_mydesk_spec36_specfixW10Last3
 angles = 9
 filters = 19
 img_ext = tiff
 img_dir_name = pose??img
-sample_matrix_dir = ./find_filter/find_filter_res/GA_70_ep694_4.08_mydesk.mat
+sample_matrix_dir = ./find_filter/find_filter_res/all_mydesk.mat # GA_70_ep694_4.08_mydesk.mat
 
 ndc_ray = 1
 rgb4shape_endIter = 2000
