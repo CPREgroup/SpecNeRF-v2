@@ -1,4 +1,7 @@
+import os
 import sys
+sys.path.append('E:\pythonProject\python3\myutils_v2')
+import time
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -8,6 +11,7 @@ import scipy.io as sio
 from glob import glob
 from filesort_int import sort_file_int
 from tqdm import tqdm
+from myutils import myutils
 
 
 class FindFilter(nn.Module):
@@ -67,7 +71,12 @@ def main():
     print(pickfilter)
 
     plt.plot(sumall.detach().cpu().numpy() * filterN)
-    plt.savefig("log/res.png")
+
+    randomfolder = myutils.makeStrID()
+    os.mkdir(f"log/{randomfolder}")
+    plt.savefig(f"log/{randomfolder}/res.png")
+    with open(f'log/{randomfolder}/res.txt', 'a+') as f:
+        f.write(str(pickfilter))
     # plt.show()
 
 
