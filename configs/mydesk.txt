@@ -2,7 +2,7 @@
 dataset_name = llff
 datadir = ./myspecdata/filter19/mydesk
 filters_folder = filters_measure
-expname =  all_mydesk_spec36_specfixW10Last3
+expname =  all_mydesk_spec36_largerSpecTV
 angles = 9
 filters = 19
 img_ext = tiff
@@ -58,4 +58,4 @@ L1_weight_rest = 4e-5
 rm_weight_mask_thre = 1e-4
 TV_weight_density = 0.8
 TV_weight_app = 0.5
-TV_weight_spec = 0.005
+TV_weight_spec = 0.025
