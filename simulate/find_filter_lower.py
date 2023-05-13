@@ -32,7 +32,6 @@ class FindFilter(nn.Module):
         return sumall, indicator
 
 
-
 def main():
     iter = 10000
     filterN = 15
