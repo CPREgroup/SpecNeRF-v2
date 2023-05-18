@@ -1,6 +1,7 @@
 import os
 import sys
 sys.path.append('E:\pythonProject\python3\myutils_v2')
+sys.path.append('E:\pythonProject\python3 v2\SpecNeRF-v2')
 import time
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,7 +35,7 @@ class FindFilter(nn.Module):
 
 def main():
     iter = 10000
-    filterN = 15
+    filterN = 19
 
     findfilter_net = FindFilter(r'E:\pythonProject\python3 v2\SpecNeRF-v2\myspecdata\filter19\filters_measure').cuda()
     optimizer = torch.optim.Adam(findfilter_net.parameters(), 0.001)

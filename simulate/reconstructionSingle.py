@@ -35,7 +35,7 @@ card = np.array([0.055 ,0.058 ,0.061 ,0.062 ,0.062 ,0.062 ,0.062 ,0.062 ,0.062 ,
 0.068 ,0.077 ,0.084 ,0.087 ,0.089 ,0.090 ,0.092 ,0.092 ,0.091 ,0.090 ,0.090 ,0.090 ,0.090 ,0.090 ,0.090 ,0.090 ,0.090 ,0.090 ,0.090 ,0.090 ,0.090 ,0.089 ,0.089 ,0.088 ,0.087 ,0.086 ,0.086 ,0.085 ,0.084 ,0.084 ,0.083 ,0.083 ,0.082 ,0.081 ,0.081 ,0.081 ,
 0.031 ,0.032 ,0.032 ,0.033 ,0.033 ,0.033 ,0.033 ,0.033 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.032 ,0.033 ,], dtype=np.float32).reshape([-1, 36]).T
 
-folder_path = './myspecdata/filter15_v1/filters' # r'myspecdata\filter19\filters_measure' #
+folder_path = r'myspecdata\filter_simu\filters19' # r'myspecdata\filter19\filters_measure' #'./myspecdata/filter15_v1/filters' # r'myspecdata\filter_simu\filters19' #
 file_list = [f for f in os.listdir(folder_path) if f.endswith('.mat')]
 
 filters = []
@@ -86,7 +86,7 @@ def main():
         fideloss = (((b - observation) / (b.detach() + 0.01)) ** 2).mean()
         tvloss = (((cards[1:, :] - cards[:-1, :]) / (cards[:-1, :] + 0.01)) ** 2).mean()
 
-        loss = fideloss + tvloss * 0.6
+        loss = fideloss + tvloss * 0.1
 
         optimizer.zero_grad()
         loss.backward()
