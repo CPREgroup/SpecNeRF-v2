@@ -2,12 +2,14 @@
 dataset_name = llff
 datadir = ./myspecdata/filters19_optimized/mydesk
 filters_folder = filters_interp25
-expname =  all_mydesk_spec25
+expname =  ga40_mydesk_spec25
 angles = 9
 filters = 19
 img_ext = tiff
 img_dir_name = pose??img
-sample_matrix_dir = ./find_filter/find_filter_res/all_mydesk.mat # GA_70_ep694_4.08_mydesk.mat
+sample_matrix_dir = ./find_filter/find_filter_res/GA_40_ep322_2.35_mydeskv2.mat
+# ./find_filter_res/random_(9,19)_80.mat
+# ./find_filter/find_filter_res/all_mydesk.mat # GA_70_ep694_4.08_mydesk.mat
 
 ndc_ray = 1
 rgb4shape_endIter = 2000
@@ -58,4 +60,4 @@ L1_weight_rest = 4e-5
 rm_weight_mask_thre = 1e-4
 TV_weight_density = 0.8
 TV_weight_app = 0.5
-TV_weight_spec = 0.01
+TV_weight_spec = 0.015

@@ -9,7 +9,7 @@ import numpy as np
 import scipy.io
 
 
-folder_path = r'myspecdata\filter19\filters_measure' # './myspecdata/filter15_v1/filters' #  #
+folder_path = r'myspecdata\filters19_optimized\filters_interp25' # r'myspecdata\filter19\filters_measure\sparse_sampled' # r'myspecdata\filters19_optimized\filters_interp25' # './myspecdata/filter15_v1/filters' #  #
 file_list = [f for f in os.listdir(folder_path) if f.endswith('.mat')]
 
 filters = []
@@ -27,9 +27,9 @@ def findINgroup(v1, g):
     diff = minus[:, 1:] - minus[:, :-1]
     inter_id = np.argwhere(diff != 0)
     if inter_id.shape[0] == 0:
-        return []
+        return np.array([])
     else:
-        return inter_id[:, 1].tolist()
+        return inter_id[:, 1]
 
 
 
@@ -37,7 +37,11 @@ def main():
     xs = []
     for i in range(filters.shape[0] - 1):
         x = findINgroup(filters[i, :], filters[i+1:, :])
-        xs += x
+        # y(x) should be low
+        ys = filters[i, x.tolist()]
+        ratio = ys / filters[i, :].max()
+        stay_idx = np.argwhere((ratio < 0.5) & (ratio > 0.1)).flatten()
+        xs += x[stay_idx].tolist()
 
     print(xs)
     counter = Counter(tuple(xs))
@@ -50,9 +54,9 @@ def main():
     plt.bar(x, y)
 
     # 添加标签和标题
-    plt.xlabel('元素')
-    plt.ylabel('出现次数')
-    plt.title('元素出现次数分布图')
+    plt.xlabel('band')
+    plt.ylabel('number')
+    plt.title('distribution of filters intersections')
 
     # 显示图形
     plt.show()

@@ -37,7 +37,7 @@ def main():
     iter = 10000
     filterN = 19
 
-    findfilter_net = FindFilter(r'E:\pythonProject\python3 v2\SpecNeRF-v2\myspecdata\filter19\filters_measure').cuda()
+    findfilter_net = FindFilter(r'E:\pythonProject\python3 v2\SpecNeRF-v2\myspecdata\filterset').cuda()
     optimizer = torch.optim.Adam(findfilter_net.parameters(), 0.001)
 
 

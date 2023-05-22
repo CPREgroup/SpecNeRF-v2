@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "E:/virtualenv_py37/torch1_11_cuda_11_3/Lib/site-packages/pybind11/include",
+                "E:/virtualenv_py37/torch1_11_cuda_11_3/Lib/site-packages/torch/include/torch/csrc/api/include/torch/**",
+                "E:/virtualenv_py37/torch1_11_cuda_11_3/Lib/site-packages/torch/include/torch/csrc/api/include/torch/detail",
+                "E:/virtualenv_py37/torch1_11_cuda_11_3/Lib/site-packages/torch/include/torch/csrc/api/include",
+                "E:/virtualenv_py37/torch1_11_cuda_11_3/Lib/site-packages/torch/include",
+                "E:/virtualenv_py37/torch1_11_cuda_11_3/Lib/site-packages/torch/include/**",
+                "E:/virtualenv_py37/torch1_11_cuda_11_3/Lib/site-packages/torch/include/torch/csrc/utils",
+                "E:/Program Files (x86)/Python37/include"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "E:/Program Files (x86)/mingw/mingw64/bin/gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64"
+        }
+    ],
+    "version": 4
+}

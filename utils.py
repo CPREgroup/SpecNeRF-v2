@@ -1,3 +1,7 @@
+from pathlib import Path
+import sys
+sys.path.append('../myutils/')
+sys.path.append('E:\pythonProject\python3\myutils_v2')
 import cv2,torch
 import numpy as np
 from PIL import Image
@@ -8,6 +12,21 @@ from opt import args
 from myutils import normalization
 
 mse2psnr = lambda x : -10. * torch.log(x) / torch.log(torch.Tensor([10.]))
+
+def get_filter_path(id_file):
+    with open(id_file) as f:
+        res = f.readlines()
+    res = list(map(lambda x: x.strip(), res))
+    filterset, ids = res[0], res[1:]
+    filterpaths = list(map(
+        lambda x: str(Path(filterset) / f'{x}.mat'),
+        ids
+    ))
+    return filterpaths
+
+
+if __name__ == '__main__':
+    get_filter_path(r'E:\pythonProject\python3 v2\SpecNeRF-v2\myspecdata\filters19_optimized\filters\ids.txt')
 
 def positionencoding1D(W, L):
 
