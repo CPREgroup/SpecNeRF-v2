@@ -13,6 +13,7 @@ from glob import glob
 from filesort_int import sort_file_int
 from tqdm import tqdm
 from myutils import myutils
+from find_intersection import get_intersection_dist
 
 
 class FindFilter(nn.Module):
@@ -28,9 +29,14 @@ class FindFilter(nn.Module):
     def forward(self):
         indicator = torch.clamp(self.indicator, 1e-3, 1)
         # sumall = torch.sum(self.filters * indicator, dim=0)
-        sumall = torch.mean(self.filters * indicator, dim=0)
+        # sumall = torch.mean(self.filters * indicator, dim=0)
         # sumall = torch.prod(self.filters * indicator, dim=0)
-        return sumall, indicator
+        return self.filters, indicator
+
+
+def get_intersection(filters):
+    # x, y = get_intersection_dist(filters)
+    # lostx = list(set(range(0, filters.shape[1] - 1)).difference(x))
 
 
 def main():
@@ -43,11 +49,15 @@ def main():
 
     pbar = tqdm(range(iter), miniters=500, file=sys.stdout)
     for iteration in pbar:
-        sumall, indicator = findfilter_net()
-        loss = ((0.5 - sumall) ** 2).mean()
+        filters, indicator = findfilter_net()
+        filters_selected = filters * indicator
+
+        sumall = torch.sum(filters_selected, dim=0)
+        loss = torch.var(sumall)
         # summean = sumall.mean()
         # summax = sumall.max()
         # loss = (summean - 0.5).abs() * 0.1 + (summean - summax).abs()
+
 
         reg = (torch.log(indicator) + torch.log(1 - indicator)).mean()
         regnum = (indicator.sum() - filterN) ** 2
