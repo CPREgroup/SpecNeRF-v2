@@ -160,6 +160,25 @@ class SSFFcn(torch.nn.Module):
         y = self.layers(x)
 
         return y
+    
+class SSF_RBF(torch.nn.Module):
+    def __init__(self, comps):
+        super(SSF_RBF, self).__init__()
+
+        self.params = nn.Parameter(torch.rand(comps, 3)) # alpha, mean, sigma
+        self.x = torch.linspace(0, 1, self.spec_channel).reshape([self.spec_channel, -1]).cuda()
+
+    def rbf(self, mean, sigma):
+        return torch.exp(-torch.norm(self.x - mean) ** 2 / (sigma ** 2))
+
+    def forward(self, _):
+        ssf = 0
+        for alpha, mean, sigma in self.params:
+            v = self.rbf(mean, sigma) * alpha
+            ssf = ssf + v
+
+        return ssf.clamp(0, 1)
+
 
 class Depth_linear(torch.nn.Module):
     def __init__(self):
@@ -212,7 +231,10 @@ class TensorBase(torch.nn.Module):
         
         self.input_1D = torch.from_numpy(positionencoding1D(args.spec_channel, 2)).float().to(device)
         # self.input_1D = positionalencoding1d_my(8, 31).to(device)
-        self.ssffcn = SSFFcn(2, args.observation_channel).to(device)
+        if args.ssf_model == 'fcn':
+            self.ssfnet = SSFFcn(2, args.observation_channel).to(device)
+        else:
+            self.ssfnet = SSF_RBF(8).to(device)
 
         self.depth_linear = Depth_linear().to(device)
 
@@ -515,7 +537,7 @@ class TensorBase(torch.nn.Module):
         spec_map = spec_map.clamp(0,1)
 
         # prepare a ssf
-        Phi = self.ssffcn(self.input_1D)  # self.Phi*self.Phi
+        Phi = self.ssfnet(self.input_1D)  # self.Phi*self.Phi
 
         rgb_map = (spec_map * filters) @ Phi
         rgb_map = rgb_map.clamp(0,1)

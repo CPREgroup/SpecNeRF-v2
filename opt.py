@@ -141,6 +141,7 @@ def config_parser(cmd=None):
     parser.add_argument('--depth_batchsize_endIter', type=int, action="append")
     parser.add_argument('--sample_matrix_dir',type=str,default='null')
     parser.add_argument('--img_ext',type=str,default='dng')
+    parser.add_argument('--ssf_model',type=str,default='fcn', help='fcn or rbf')
     parser.add_argument('--distortion_loss', action='store_true')
     parser.add_argument('--band_start_idx',type=int,default=3)
     parser.add_argument('--colIdx4RGBTrain', help='col index in fixed sample matrix',type=int,default=0)
