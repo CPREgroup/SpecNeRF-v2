@@ -1,13 +1,15 @@
 
 dataset_name = llff
-datadir = ./myspecdata/filter19/mydesk
-filters_folder = filters_measure
-expname =  ga70_mydesk_spec36_shifted_handcraftPrior
+datadir = ./myspecdata/filters19_optimized/mydesk
+filters_folder = filters_interp25
+expname =  ga40_mydesk_spec25
 angles = 9
 filters = 19
 img_ext = tiff
 img_dir_name = pose??img
-sample_matrix_dir = ./find_filter/find_filter_res/GA_70_ep694_4.08_mydesk.mat
+sample_matrix_dir = ./find_filter/find_filter_res/GA_40_ep322_2.35_mydeskv2.mat
+# ./find_filter_res/random_(9,19)_80.mat
+# ./find_filter/find_filter_res/all_mydesk.mat # GA_70_ep694_4.08_mydesk.mat
 
 ndc_ray = 1
 ssf_model = rbf # fcn
@@ -22,7 +24,7 @@ observation_channel = 1
 band_start_idx = 0
 colIdx4RGBTrain = 0
 downsample_train = 2
-crop_hw = [1000, 1344]
+crop_hw = [1000, 1500]
 
 
 n_iters = 20000
