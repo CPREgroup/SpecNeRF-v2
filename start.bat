@@ -1,1 +1,1 @@
-python train.py --config configs\mydesk.txt
+python train.py --config configs\xjhdesk.txt

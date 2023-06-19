@@ -1,8 +1,8 @@
 
 dataset_name = llff
-datadir = ./myspecdata/filters19_optimized/mydesk
-filters_folder = filters_interp25
-expname =  all_mydesk_spec25_3rbf_no1limit
+datadir = ./myspecdata/filters19_optimized/xjhdesk
+filters_folder = filters
+expname =  all_xjhdesk_spec31_8rbf_L2rbf0d1weight
 angles = 9
 filters = 19
 img_ext = tiff
@@ -21,9 +21,9 @@ reset_para
 depth_batchsize_endIter = [512, 300]
 # distortion_loss
 # lsc
-spec_channel = 25
+spec_channel = 31
 observation_channel = 1
-band_start_idx = 0
+band_start_idx = 5
 colIdx4RGBTrain = 0
 downsample_train = 2
 crop_hw = [1000, 1500]

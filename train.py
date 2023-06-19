@@ -133,6 +133,7 @@ def reconstruction(args):
     os.makedirs(f'{logfolder}/imgs_rgba', exist_ok=True)
     os.makedirs(f'{logfolder}/rgba', exist_ok=True)
     os.makedirs(f'{logfolder}/SSFs', exist_ok=True)
+    os.makedirs(f'{logfolder}/SSFs/RBFparams', exist_ok=True)
     # copy config file
     copy(args.config, logfolder)
 
@@ -265,9 +266,12 @@ def reconstruction(args):
         rgbloss = (((rgb_map - rgb_train) / (rgb_map.detach() + 0.01)) ** 2).mean()
         psnrloss = criterian(rgb_map, rgb_train).detach().item() # temp
 
-
         # loss
         total_loss = rgbloss + depth_loss + dist_loss
+        if args.ssf_model == 'rbf':
+            RBFweights = tensorf.ssfnet.params[:, 0]
+            weight_reg = (RBFweights ** 2).mean()
+            total_loss += weight_reg * 0.1
 
         if args.TV_weight_spec > 0:
             loss_specTV = TVloss_Spectral(spec_map)
@@ -328,6 +332,9 @@ def reconstruction(args):
             saveModel(tensorf, f'{logfolder}/{iteration}_{args.expname}.pth')
             sio.savemat(f'{logfolder}/SSFs/ssf_{iteration}.mat',
                         {'ssf': ssf.cpu().detach().numpy()})
+            if args.ssf_model == 'rbf':
+                sio.savemat(f'{logfolder}/SSFs/RBFparams/param_{iteration}.mat',
+                            {'rbf': tensorf.ssfnet.params.data.cpu().detach().numpy()})
 
             PSNRs_test = evaluation(test_dataset,tensorf, args, renderer, f'{logfolder}/imgs_vis/', N_vis=args.N_vis,
                                     prtx=f'{iteration:06d}_', N_samples=nSamples, white_bg = white_bg, ndc_ray=ndc_ray, compute_extra_metrics=False)
