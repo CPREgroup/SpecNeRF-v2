@@ -2,7 +2,7 @@
 dataset_name = llff
 datadir = ./myspecdata/filters19_optimized/xjhdesk
 filters_folder = filters
-expname =  all_xjhdesk_spec31_8rbf_L2rbf0d1weight_specNorm
+expname =  all_xjhdesk_spec31_8rbf_L2rbf0d1weight_MeanNorm
 angles = 9
 filters = 19
 img_ext = tiff

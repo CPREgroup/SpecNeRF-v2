@@ -536,7 +536,7 @@ class TensorBase(torch.nn.Module):
         if white_bg or (is_train and torch.rand((1,))<0.5):
             spec_map = spec_map + (1. - acc_map[..., None])
         # norm the spec using mean filter transmittence
-        spec_map = spec_map / LLFFDataset.filters_mean
+        true_spec = (spec_map / LLFFDataset.filters_mean).clamp(0,1)
         spec_map = spec_map.clamp(0,1)
 
         # prepare a ssf
@@ -549,5 +549,5 @@ class TensorBase(torch.nn.Module):
         depth_map = torch.sum(weight * z_vals, -1)
         # depth_map = depth_map + (1. - acc_map) * rays_chunk[..., -1]
 
-        return rgb_map, depth_map, dist_loss, spec_map, Phi # rgb, sigma, alpha, weight, bg_weight
+        return rgb_map, depth_map, dist_loss, true_spec, Phi # rgb, sigma, alpha, weight, bg_weight
 

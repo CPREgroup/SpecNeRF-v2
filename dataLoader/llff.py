@@ -1,6 +1,7 @@
 from pathlib import Path
 import traceback
 import cv2
+from matplotlib import pyplot as plt
 import torch
 from torch.utils.data import Dataset
 import glob
@@ -187,8 +188,12 @@ class LLFFDataset:
 
             cls.filters_back.append(fi)
         cls.filters_back = torch.stack(cls.filters_back)
-        cls.filters_mean = cls.filters_back.mean(dim=0, keepdim=True).cuda()
-
+        cls.filters_mean = cls.filters_back.mean(dim=0, keepdim=True)
+        plt.plot(cls.filters_mean.numpy().flatten())
+        plt.show()
+        # norm
+        cls.filters_back = cls.filters_back / cls.filters_mean
+        cls.filters_mean = cls.filters_mean.cuda()
 
     def read_meta(self):
         poses_bounds = np.load(os.path.join(self.root_dir, 'poses_bounds.npy'))  # (N_images, 17)
