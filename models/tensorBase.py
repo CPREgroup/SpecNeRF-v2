@@ -193,6 +193,15 @@ class Depth_linear(torch.nn.Module):
         return self.a * depth_est + self.b
 
 
+class Filter_linear(torch.nn.Module):
+    def __init__(self):
+        super(Filter_linear, self).__init__()
+        self.a = nn.Parameter(torch.FloatTensor([1.0] * (args.filters + 1)).reshape([-1, 1]))
+
+    def forward(self, filters, ids):
+        return filters[ids] * self.a[ids]
+
+
 class TensorBase(torch.nn.Module):
     def __init__(self, aabb, gridSize, device, density_n_comp = 8, appearance_n_comp = 24, app_dim = 27,
                     shadingMode = 'MLP_PE', alphaMask = None, near_far=[2.0,6.0],
@@ -238,6 +247,7 @@ class TensorBase(torch.nn.Module):
             self.ssfnet = SSF_RBF(8).to(device)
 
         self.depth_linear = Depth_linear().to(device)
+        self.filter_linear = Filter_linear().to(device)
 
 
     def init_render_func(self, shadingMode, pos_pe, view_pe, fea_pe, featureC, device):

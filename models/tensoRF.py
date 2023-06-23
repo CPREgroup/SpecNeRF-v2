@@ -165,6 +165,7 @@ class TensorVMSplit(TensorBase):
         grad_vars = [{'params': self.density_line, 'lr': lr_init_spatialxyz}, 
                      {'params': self.density_plane, 'lr': lr_init_spatialxyz},
                     {'params': self.depth_linear.parameters(), 'lr': lr_init_network},
+                    {'params': self.filter_linear.parameters(), 'lr': lr_init_network},
                     {'params': self.app_line, 'lr': lr_init_spatialxyz, 'myname': 'appLine'}, 
                     {'params': self.app_plane, 'lr': lr_init_spatialxyz, 'myname': 'appPlane'},
                     {'params': self.basis_mat.parameters(), 'lr':lr_init_network, 'myname': 'basisMat'},

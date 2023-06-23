@@ -216,6 +216,7 @@ def reconstruction(args):
             rays_train, rgb_train, poseID_train, filterID_train = allrays[ray_idx], allrgbs[ray_idx].to(device), allposesID[ray_idx], all_filterID[ray_idx]
 
         if args.reset_para and args.rgb4shape_endIter == iteration:
+            tensorf.filter_linear.a.requires_grad = True
             #reset lr
             for param_group in optimizer.param_groups:
                 if hasattr(param_group, 'myname'):
@@ -268,6 +269,10 @@ def reconstruction(args):
 
         # loss
         total_loss = rgbloss + depth_loss + dist_loss
+
+        # filter compentation reg for a close to 1
+        total_loss += ((tensorf.filter_linear.a - 1.0) ** 2).mean() * 0.1
+
         if args.ssf_model == 'rbf':
             RBFweights = tensorf.ssfnet.params[:, 0]
             weight_reg = (RBFweights ** 2).mean()

@@ -18,8 +18,9 @@ def OctreeRender_trilinear_fast(rays, tensorf, chunk=args.chunk_size, N_samples=
     for chunk_idx in range(N_rays_all // chunk + int(N_rays_all % chunk > 0)):
         rays_chunk = rays[chunk_idx * chunk:(chunk_idx + 1) * chunk].to(device)
         poseids_chunk = poseids[chunk_idx * chunk:(chunk_idx + 1) * chunk].to(device)
-        filters_chunk = filters[filterids[chunk_idx * chunk:(chunk_idx + 1) * chunk].reshape(-1)].to(device)
-    
+        filters_chunk = tensorf.filter_linear(filters.cuda(), 
+                            filterids[chunk_idx * chunk:(chunk_idx + 1) * chunk].reshape(-1).cuda())
+       
         rgb_map, depth_map, dist_loss, spec_map, phi = tensorf(rays_chunk, poseids_chunk, filters_chunk, is_train=is_train, white_bg=white_bg, \
                                                 ndc_ray=ndc_ray, N_samples=N_samples)
 
