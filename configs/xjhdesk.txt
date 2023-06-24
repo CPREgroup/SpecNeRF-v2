@@ -1,8 +1,9 @@
 
 dataset_name = llff
 datadir = ./myspecdata/filters19_optimized/xjhdesk
+basedir = ./logexp
 filters_folder = filters
-expname =  all_xjhdesk_spec31_8rbf_L2rbf0d1weight
+expname =  all_xjhdesk
 angles = 9
 filters = 19
 img_ext = tiff
@@ -29,7 +30,7 @@ downsample_train = 2
 crop_hw = [1000, 1500]
 
 
-n_iters = 20000
+n_iters = 15000
 batch_size = 2048
 chunk_size = 2048
 
@@ -46,7 +47,7 @@ render_only = 0
 # ckpt = log\all_mydesk_spec25_rbf\3999_all_mydesk_spec25_rbf.pth
 render_test = 1
 render_train = 0
-render_path = 0
+render_path = 1
 
 n_lamb_sigma = [10,7,7]
 n_lamb_sh = [36,18,18]
