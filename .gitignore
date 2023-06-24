@@ -1,10 +1,14 @@
 
 *.pyc
 log/
+logexp/
 data/
 myspecdata/
-find_filter
-find_filter/
+find_filter/cppNcuda/dist
+find_filter/cppNcuda/build
+find_filter/cppNcuda/include
+find_filter/cppNcuda/gascore.egg-info
+find_filter/find_filter_res/
 find_filter_res/
 log_filter/
 start

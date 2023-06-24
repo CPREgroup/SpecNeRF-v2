@@ -3,13 +3,13 @@ dataset_name = llff
 datadir = ./myspecdata/filters19_optimized/xjhdesk
 basedir = ./logexp
 filters_folder = filters
-expname =  all_xjhdesk
+expname =  ga80_xjhdesk
 angles = 9
 filters = 19
 img_ext = tiff
 img_dir_name = pose??img
-sample_matrix_dir = ./find_filter/find_filter_res/all_mydesk.mat
-# ./find_filter/find_filter_res/GA_40_ep322_2.35_mydeskv2.mat
+sample_matrix_dir = ./find_filter/find_filter_res/GA_80_ep1998_4.276_xjhdesk.mat
+# ./find_filter/find_filter_res/all_mydesk.mat
 # ./find_filter_res/random_(9,19)_80.mat
 #  
 # GA_70_ep694_4.08_mydesk.mat
@@ -43,9 +43,9 @@ N_vis = -1
 vis_every = 500
 
 export_mesh = 0
-render_only = 0
-# ckpt = log\all_mydesk_spec25_rbf\3999_all_mydesk_spec25_rbf.pth
-render_test = 1
+render_only = 1
+ckpt = logexp\ga80_xjhdesk\14999_ga80_xjhdesk.pth
+render_test = 0
 render_train = 0
 render_path = 1
 
