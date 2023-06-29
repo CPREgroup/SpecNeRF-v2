@@ -34,13 +34,13 @@ double cal_idv(arrint &idv, const unc &dis_mtx_r,
         }
     }
 
-    for (py::ssize_t i = 0; i < number; i++)
-    {
-        transsum += ssf_trans_r(idv_r(i, 1));
-    }
+    // for (py::ssize_t i = 0; i < number; i++)
+    // {
+    //     transsum += ssf_trans_r(idv_r(i, 1));
+    // }
     
     
-    return 1 / score + weight * transsum;
+    return 1 / score; // + weight * transsum;
 }
 
 

@@ -111,6 +111,17 @@ class GeneSolve:
 
         self.genes = np.vstack(gen(self.pop_size, self.width))
 
+        def get_meshgrid_comb():
+            n = number
+            init_id = list(range(1, n))
+            res_id = init_id[:]
+            for i in range(1, n):
+                res_id += list(map(lambda x: x + n*i, init_id[i:]))
+            return res_id
+        self.comb_meshgrid_id = get_meshgrid_comb()
+
+        pass
+
     def cal_ssfCoorelation(self):
         n = self.poses[1]
         ssf_norm = np.linalg.norm(np.array(self.filters_list), axis=-1)
@@ -230,108 +241,31 @@ class GeneSolve:
         return genes
 
     
+    def get_combination(self, arr):
+        comb = np.array(np.meshgrid(arr, arr)).T.reshape(-1, 2)
+        comb2 = comb[self.comb_meshgrid_id, :]
+
+        return comb2
+
+
     def get_adjust(self):
-        """计算适应度(只有在计算适应度的时候要反函数，其余过程全都是随机的二进制编码）"""
-        x = self.get_decode()  # 100 x 12 x i x 31
-
-        def individual(scenes):
-            # scenes 12 x i x 31
-            n = len(scenes)
-            score = 0
-            valid_posePair_num = 0
-            for i in range(n):
-                pose_i = scenes[i]
-                for j in range(i + 1, n):
-                    pose_j = scenes[j]
-                    # the larger dis is, the smaller weight of its value
-                    coor_mtx = pose_i @ pose_j.T
-                    # coor_mean = np.linalg.norm(coor_mtx, ord='fro') / np.sqrt(coor_mtx.size)
-                    coor_mean = np.sum(np.abs(coor_mtx))
-                    # print(coor_mean, np.linalg.norm(coor_mtx, ord='fro'), np.sqrt(coor_mtx.size))
-                    disss = self.dis_mtx[i, j]
-
-                    if np.sqrt(coor_mtx.size) == 0.:
-                        continue
-                    valid_posePair_num += 1
-
-                    score += coor_mean * disss
-            score = score * 100 / (valid_posePair_num ** 3)
-
-            if score == 0.0:
-                myd.goin(locals())
-            return 1 / score  # we want to minimize the score
-
-        def individual_ssf2ssf(scenes):
-            # scenes 12 x i x 31
-            # flatten scenes -1 x 31
-            ssfs = []
-            num = []
-            for Apose in scenes:
-                Apose = list(Apose)
-                ssfs += Apose
-                num.append(len(Apose))
-            acc_num = np.cumsum(num)
-
-            def in_which_position(idx):
-                ids = np.argwhere(idx < acc_num)
-                return ids[0][0]
-
-            # cal the norm of every ssf
-            ssf_norm = np.linalg.norm(np.array(ssfs), axis=-1)
-            # cal the coorelation per ssf by per ssf
-            score = 0
-            for i in range(len(ssfs)):
-                posei_idx = in_which_position(i)
-                for j in range(i + 1):
-                    posej_idx = in_which_position(j)
-
-                    disss = self.dis_mtx[posei_idx, posej_idx]
-                    coorela = np.sum(ssfs[i] * ssfs[j]) / (ssf_norm[i] * ssf_norm[j])
-                    viewDir_rela = self.cosSimi[posei_idx, posej_idx]
-                    score += disss * viewDir_rela * coorela
-
-            return 1 / score  # we want to minimize the score
-
-        def individual_ssf2ssf_v2(coor):
-            # cal the coorelation per ssf by per ssf
-            combs = list(itertools.combinations(coor.tolist(), 2))
-
-            def cal_pair(cb):
-                r1, c1 = cb[0]
-                r2, c2 = cb[1]
-
-                disss = self.dis_mtx[r1, r2]
-                coorela = self.ssf_coor[c1, c2]
-                viewDir_rela = self.cosSimi[r1, r2]
-                score = disss * viewDir_rela * coorela
-                return score
-
-            score = sum(map(cal_pair, combs))
-
-            return 1 / score  # we want to minimize the score
-
-        # ret = list(map(individual_ssf2ssf_v2, x))
-
-        # ret = [0] * len(x)
-        ret = gascore.cal_score(x, self.dis_mtx, self.ssf_coor, self.cosSimi, self.filters_trans_mean, weight)
-
-        return ret
-
-    def get_decode(self):
         """编码，从表现型到基因型的映射"""
+        indexes = np.argwhere(self.genes == 1)[:, 1]
+        r_idx, c_idx = np.unravel_index(indexes, self.fai.shape[:2])
+        r_idx, c_idx = r_idx.reshape([-1, number]), c_idx.reshape([-1, number])
 
-        def extract_fs(idx):
-            indexes = np.argwhere(idx == 1)
-            r_idx, c_idx = np.unravel_index(indexes, self.fai.shape[:2])
+        """计算适应度(只有在计算适应度的时候要反函数，其余过程全都是随机的二进制编码）"""
+        r_comb = np.stack(map(self.get_combination, r_idx), axis=0).reshape(-1, 2) # e.g. (40000 x 780) x 2
+        c_comb = np.stack(map(self.get_combination, c_idx), axis=0).reshape(-1, 2)
 
-            return np.hstack((r_idx, c_idx))
+        distance = self.dis_mtx[r_comb[:, 0], r_comb[:, 1]]
+        ssfCoorela = self.ssf_coor[c_comb[:, 0], c_comb[:, 1]]
+        viewDir_rela = self.cosSimi[r_comb[:, 0], r_comb[:, 1]]
+        score = (distance * ssfCoorela * viewDir_rela).reshape(self.pop_size, -1).sum(1)
 
-        # vextract_fs = np.vectorize(extract_fs, signature='(n)->(k)')
+        score = 1 / score
 
-        poses_filters = list(map(extract_fs, self.genes))
-        # poses_filters = vextract_fs(self.genes)
-
-        return poses_filters
+        return score
 
     
     def cycle_select(self):
@@ -399,12 +333,12 @@ class GeneSolve:
 
 
 if __name__ == '__main__':
-    outfile = f'find_filter/find_filter_res/xjhdesk_sigma0d5_wei0d1_num120' # lab_trans_sigma0d3_wei1d0_num40
+    outfile = f'find_filter/find_filter_res/xjhdesk_sigma0d5_wei0d1_num40' # lab_trans_sigma0d3_wei1d0_num40
     if not os.path.exists(outfile):
         os.makedirs(outfile)
 
     sigma = 0.5
-    number = 120
+    number = 40
     cosSim_gamma = 2.5
     weight = 0.1
     print(f'running sigma = {sigma}')
