@@ -20,8 +20,8 @@ from scipy.spatial.transform import Rotation
 from myutils import Plt_subplot_in_loop_or_ion
 import gascore
 
-myd = Online_breakpoint_debug()
-myd.start()
+# myd = Online_breakpoint_debug()
+# myd.start()
 
 def execute_time(func):
     # 定义嵌套函数，用来打印出装饰的函数的执行时间
@@ -235,7 +235,7 @@ class GeneSolve:
                 ones_idx = random.sample(tt, abs(ones_num - self.aim_number))
             except Exception as e:
                 print(traceback.format_exc())
-                myd.goin(locals())
+                # myd.goin(locals())
             genes[ones_idx] = to_what
 
         return genes
