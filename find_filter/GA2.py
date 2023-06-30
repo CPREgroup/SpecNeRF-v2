@@ -247,12 +247,12 @@ class GeneSolve:
 
         return comb2
 
-
+    @nb.jit
     def get_adjust(self):
         """编码，从表现型到基因型的映射"""
         indexes = np.argwhere(self.genes == 1)[:, 1]
         r_idx, c_idx = np.unravel_index(indexes, self.fai.shape[:2])
-        r_idx, c_idx = r_idx.reshape([-1, number]), c_idx.reshape([-1, number])
+        r_idx, c_idx = r_idx.reshape([-1, number]), c_idx.reshape([-1, number]) # e.g. 40000 x 40
 
         """计算适应度(只有在计算适应度的时候要反函数，其余过程全都是随机的二进制编码）"""
         r_comb = np.stack(map(self.get_combination, r_idx), axis=0).reshape(-1, 2) # e.g. (40000 x 780) x 2
@@ -333,20 +333,19 @@ class GeneSolve:
 
 
 if __name__ == '__main__':
-    outfile = f'find_filter/find_filter_res/xjhdesk_sigma0d5_wei0d1_num40' # lab_trans_sigma0d3_wei1d0_num40
+    outfile = f'find_filter/find_filter_res/xjhdesk_sigma0d1_num40' # lab_trans_sigma0d3_wei1d0_num40
     if not os.path.exists(outfile):
         os.makedirs(outfile)
 
-    sigma = 0.5
-    number = 40
-    cosSim_gamma = 2.5
-    weight = 0.1
+    sigma = 0.05 # dis
+    number = 40 
+    cosSim_gamma = 2.5 # view dir exp
     print(f'running sigma = {sigma}')
     print(f'running number = {number}')
     t1 = time.time()
     gs = GeneSolve(r'./myspecdata\filters19_optimized\xjhdesk/poses_bounds.npy',
                    r'./myspecdata\filters19_optimized\filters_interp25/*.mat',
-                   40000, 2000, 0.65, 0.1, 1.05, (9, 19), number, np.sqrt(sigma))
+                   20000, 1000, 0.65, 0.1, 1.05, (9, 19), number, np.sqrt(sigma))
     gs.evolve()
     t2 = time.time()
 
