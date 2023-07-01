@@ -1,3 +1,4 @@
+from calendar import c
 import itertools
 import os
 import random
@@ -156,7 +157,7 @@ class GeneSolve:
         ])
         fai = filters_list[np.newaxis, ...].repeat(self.poses[0], axis=0)
 
-        self.filters_list = filters_list
+        self.filters_list = filters_list # 19 x 25
         self.filters_trans_mean = filters_list.mean(axis=1)
 
         return fai
@@ -241,13 +242,17 @@ class GeneSolve:
         return genes
 
     
-    def get_combination(self, arr):
+    def _get_combination(self, arr):
         comb = np.array(np.meshgrid(arr, arr)).T.reshape(-1, 2)
         comb2 = comb[self.comb_meshgrid_id, :]
 
         return comb2
+    
+    def _pad_filterid(self, arr):
+        arr = np.unique(arr)
+        arr_pad = np.pad(arr, (0, self.poses[1] - arr.shape[0]), "constant", constant_values=self.poses[1])
+        return arr_pad
 
-    @nb.jit
     def get_adjust(self):
         """编码，从表现型到基因型的映射"""
         indexes = np.argwhere(self.genes == 1)[:, 1]
@@ -255,15 +260,21 @@ class GeneSolve:
         r_idx, c_idx = r_idx.reshape([-1, number]), c_idx.reshape([-1, number]) # e.g. 40000 x 40
 
         """计算适应度(只有在计算适应度的时候要反函数，其余过程全都是随机的二进制编码）"""
-        r_comb = np.stack(map(self.get_combination, r_idx), axis=0).reshape(-1, 2) # e.g. (40000 x 780) x 2
-        c_comb = np.stack(map(self.get_combination, c_idx), axis=0).reshape(-1, 2)
+        r_comb = np.apply_along_axis(self._get_combination, axis=1, arr=r_idx).reshape(-1, 2) # e.g. (40000 x 780) x 2
+        c_comb = np.apply_along_axis(self._get_combination, axis=1, arr=c_idx).reshape(-1, 2)
 
         distance = self.dis_mtx[r_comb[:, 0], r_comb[:, 1]]
         ssfCoorela = self.ssf_coor[c_comb[:, 0], c_comb[:, 1]]
         viewDir_rela = self.cosSimi[r_comb[:, 0], r_comb[:, 1]]
         score = (distance * ssfCoorela * viewDir_rela).reshape(self.pop_size, -1).sum(1)
 
-        score = 1 / score
+        # cal ssf var   
+        ssflist_with0 = np.vstack((self.filters_list, [0] * self.filters_list.shape[1]))
+        c_idx_unique = np.apply_along_axis(self._pad_filterid, axis=1, arr=c_idx)
+        ssfs = ssflist_with0[c_idx_unique.flatten(), :].reshape([self.pop_size, self.poses[1], -1])
+        ssfs_var = np.var(np.sum(ssfs, axis=1), axis=1) * ssfs_var_weight
+
+        score = 1 / score + 1 / ssfs_var
 
         return score
 
@@ -333,13 +344,14 @@ class GeneSolve:
 
 
 if __name__ == '__main__':
-    outfile = f'find_filter/find_filter_res/xjhdesk_sigma0d1_num40' # lab_trans_sigma0d3_wei1d0_num40
+    outfile = f'find_filter/find_filter_res/xjhdesk_sigma0d05_num40' # lab_trans_sigma0d3_wei1d0_num40
     if not os.path.exists(outfile):
         os.makedirs(outfile)
 
     sigma = 0.05 # dis
     number = 40 
     cosSim_gamma = 2.5 # view dir exp
+    ssfs_var_weight = 1
     print(f'running sigma = {sigma}')
     print(f'running number = {number}')
     t1 = time.time()
