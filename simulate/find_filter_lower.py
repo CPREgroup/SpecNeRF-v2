@@ -110,9 +110,9 @@ def main():
     plt.plot(sumall.detach().cpu().numpy() * filterN)
 
     randomfolder = myutils.makeStrID()
-    os.mkdir(f"log/{randomfolder}")
-    plt.savefig(f"log/{randomfolder}/res.png")
-    with open(f'log/{randomfolder}/res.txt', 'a+') as f:
+    os.mkdir(f"log_filter/{randomfolder}")
+    plt.savefig(f"log_filter/{randomfolder}/res.png")
+    with open(f'log_filter/{randomfolder}/res.txt', 'a+') as f:
         f.write(str(pickfilter))
     # plt.show()
 

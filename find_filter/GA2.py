@@ -145,7 +145,7 @@ class GeneSolve:
         normed = np.linalg.norm(self.view_dirs, axis=-1).reshape(-1, 1)
         all_normed = normed * normed.T
 
-        cosSimi = (num / all_normed) / 2 + 0.5
+        cosSimi = np.abs(num / all_normed) / 2 + 0.5
         cosSimi = cosSimi ** cosSim_gamma
 
         return cosSimi
@@ -344,13 +344,13 @@ class GeneSolve:
 
 
 if __name__ == '__main__':
-    outfile = f'find_filter/find_filter_res/xjhdesk_sigma0d05_num40' # lab_trans_sigma0d3_wei1d0_num40
+    outfile = f'find_filter/find_filter_res/xjhdesk_sigma0d5_dir1d5_num40' # lab_trans_sigma0d3_wei1d0_num40
     if not os.path.exists(outfile):
         os.makedirs(outfile)
 
-    sigma = 0.05 # dis
+    sigma = 0.5 # dis
     number = 40 
-    cosSim_gamma = 2.5 # view dir exp
+    cosSim_gamma = 1.5 # view dir exp
     ssfs_var_weight = 1
     print(f'running sigma = {sigma}')
     print(f'running number = {number}')
