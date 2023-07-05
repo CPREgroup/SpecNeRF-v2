@@ -1,8 +1,9 @@
 
 dataset_name = llff
-datadir = ./myspecdata/filters19_optimized/mydesk
-filters_folder = filters_interp25
-expname =  all_mydesk_spec25_3rbf_no1limit
+datadir = ./myspecdata/filter19/mydesk
+filters_folder = filters_measure/sparse_sampled
+basedir = ./logexp
+expname =  all_mydesk_oldset
 angles = 9
 filters = 19
 img_ext = tiff
@@ -29,7 +30,7 @@ downsample_train = 2
 crop_hw = [1000, 1500]
 
 
-n_iters = 20000
+n_iters = 15000
 batch_size = 2048
 chunk_size = 2048
 
@@ -45,8 +46,8 @@ export_mesh = 0
 render_only = 0
 # ckpt = log\all_mydesk_spec25_rbf\3999_all_mydesk_spec25_rbf.pth
 render_test = 1
-render_train = 0
-render_path = 0
+render_train = 1
+render_path = 1
 
 n_lamb_sigma = [10,7,7]
 n_lamb_sh = [36,18,18]

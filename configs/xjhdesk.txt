@@ -3,12 +3,13 @@ dataset_name = llff
 datadir = ./myspecdata/filters19_optimized/xjhdesk
 basedir = ./logexp
 filters_folder = filters
-expname =  ga80_xjhdesk
+expname =  ga40_xjhdesk_VfilterVar
 angles = 9
 filters = 19
 img_ext = tiff
 img_dir_name = pose??img
-sample_matrix_dir = ./find_filter/find_filter_res/GA_80_ep1998_4.276_xjhdesk.mat
+sample_matrix_dir = ./find_filter/find_filter_res/GA_40_ep998_20.3_xjhdesk_VfilterVar.mat
+# GA_80_ep1998_4.276_xjhdesk.mat
 # ./find_filter/find_filter_res/all_mydesk.mat
 # ./find_filter_res/random_(9,19)_80.mat
 #  

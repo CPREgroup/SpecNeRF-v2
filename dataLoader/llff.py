@@ -233,7 +233,7 @@ class LLFFDataset:
         up = normalize(self.poses[:, :3, 1].sum(0))
         rads = np.percentile(np.abs(tt), 90, 0)
 
-        self.render_path = get_spiral(self.poses, self.near_fars, N_views=N_views, n_rot=N_rots)
+        self.render_path = get_spiral(self.poses, self.near_fars, N_views=N_views, n_rot=N_rots, rads_scale=0.3)
 
         # distances_from_center = np.linalg.norm(self.poses[..., 3], axis=1)
         # val_idx = np.argmin(distances_from_center)  # choose val image as the closest to
