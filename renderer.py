@@ -94,6 +94,7 @@ def evaluation(test_dataset:LLFFDataset,tensorf, args, renderer, savePath=None, 
             imageio.imwrite(f'{savePath}/rgbd/{prtx}{idx:03d}.png', rgb_map)
             # save spec.mat
             sio.savemat(f'{savePath}/spec/{prtx}{idx:03d}.mat', {'spec': spec_map})
+            sio.savemat(f'{savePath}/rgbd/{prtx}{idx:03d}_depth.mat', {'depth': depth_map})
 
     # imageio.mimwrite(f'{savePath}/{prtx}video.mp4', np.stack(rgb_maps), fps=30, quality=10)
     # imageio.mimwrite(f'{savePath}/{prtx}depthvideo.mp4', np.stack(depth_maps), fps=30, quality=10)

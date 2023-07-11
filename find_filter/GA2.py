@@ -15,10 +15,10 @@ import scipy.io as sio
 from tqdm.auto import tqdm
 
 import filesort_int
-from Online_breakpoint_debug import Online_breakpoint_debug
+# from Online_breakpoint_debug import Online_breakpoint_debug
 from multiprocessing.dummy import Pool
 from scipy.spatial.transform import Rotation
-from myutils import Plt_subplot_in_loop_or_ion
+from Images import Plt_subplot_in_loop_or_ion
 import gascore
 
 # myd = Online_breakpoint_debug()
@@ -344,12 +344,12 @@ class GeneSolve:
 
 
 if __name__ == '__main__':
-    outfile = f'find_filter/find_filter_res/xjhdesk_sigma0d5_dir1d5_num40' # lab_trans_sigma0d3_wei1d0_num40
+    outfile = f'find_filter/find_filter_res/xjhdesk_sigma0d5_dir1d5_num20' # lab_trans_sigma0d3_wei1d0_num40
     if not os.path.exists(outfile):
         os.makedirs(outfile)
 
     sigma = 0.5 # dis
-    number = 40 
+    number = 20 
     cosSim_gamma = 1.5 # view dir exp
     ssfs_var_weight = 1
     print(f'running sigma = {sigma}')
