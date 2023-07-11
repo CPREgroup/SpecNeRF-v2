@@ -1,14 +1,15 @@
 
 dataset_name = llff
 datadir = ./myspecdata/filters19_optimized/xjhdesk
-basedir = ./logexp
+basedir = ./logexp_ssfRepresent
 filters_folder = filters
-expname =  ga40_xjhdesk_VfilterVar
+expname =  all_xjhdesk_fcn4layer
 angles = 9
 filters = 19
 img_ext = tiff
 img_dir_name = pose??img
-sample_matrix_dir = ./find_filter/find_filter_res/GA_40_ep998_20.3_xjhdesk_VfilterVar.mat
+sample_matrix_dir = ./find_filter/find_filter_res/all_mydesk.mat
+# GA_40_ep998_20.3_xjhdesk_VfilterVar.mat
 # GA_80_ep1998_4.276_xjhdesk.mat
 # ./find_filter/find_filter_res/all_mydesk.mat
 # ./find_filter_res/random_(9,19)_80.mat
@@ -16,7 +17,7 @@ sample_matrix_dir = ./find_filter/find_filter_res/GA_40_ep998_20.3_xjhdesk_Vfilt
 # GA_70_ep694_4.08_mydesk.mat
 
 ndc_ray = 1
-ssf_model = rbf # fcn
+ssf_model = fcn
 rgb4shape_endIter = 2000
 reset_para
 # depth_supervise
@@ -31,7 +32,7 @@ downsample_train = 2
 crop_hw = [1000, 1500]
 
 
-n_iters = 15000
+n_iters = 20000
 batch_size = 2048
 chunk_size = 2048
 
@@ -44,10 +45,10 @@ N_vis = -1
 vis_every = 500
 
 export_mesh = 0
-render_only = 1
-ckpt = logexp\ga80_xjhdesk\14999_ga80_xjhdesk.pth
-render_test = 0
-render_train = 0
+render_only = 0
+# ckpt = logexp\ga80_xjhdesk\14999_ga80_xjhdesk.pth
+render_test = 1
+render_train = 1
 render_path = 1
 
 n_lamb_sigma = [10,7,7]

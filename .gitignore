@@ -2,6 +2,7 @@
 *.pyc
 log/
 logexp/
+logexp_ssfRepresent/
 data/
 myspecdata/
 find_filter/cppNcuda/dist
