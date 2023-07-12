@@ -3,7 +3,7 @@ dataset_name = llff
 datadir = ./myspecdata/filters19_optimized/xjhdesk
 basedir = ./logexp_ssfRepresent
 filters_folder = filters
-expname =  all_xjhdesk_fcn4layer
+expname =  all_xjhdesk_RBF8
 angles = 9
 filters = 19
 img_ext = tiff
@@ -17,7 +17,7 @@ sample_matrix_dir = ./find_filter/find_filter_res/all_mydesk.mat
 # GA_70_ep694_4.08_mydesk.mat
 
 ndc_ray = 1
-ssf_model = fcn
+ssf_model = rbf # fcn
 rgb4shape_endIter = 2000
 reset_para
 # depth_supervise
