@@ -119,6 +119,7 @@ def evaluation_path(test_dataset,tensorf, c2ws, renderer, savePath=None, N_vis=5
     ssims,l_alex,l_vgg=[],[],[]
     os.makedirs(savePath, exist_ok=True)
     os.makedirs(savePath+"/rgbd", exist_ok=True)
+    os.makedirs(savePath+"/spec", exist_ok=True)
 
     try:
         tqdm._instances.clear()
@@ -142,7 +143,7 @@ def evaluation_path(test_dataset,tensorf, c2ws, renderer, savePath=None, N_vis=5
                      poseids=ones_filtersIdx.expand((rays.shape[0], -1)), filterids=ones_filtersIdx.expand((rays.shape[0], -1)))
         rgb_map = rgb_map.clamp(0.0, 1.0)
 
-        rgb_map, depth_map = rgb_map.reshape(H, W, args.observation_channel).cpu(), depth_map.reshape(H, W).cpu()
+        rgb_map, depth_map, spec_map = rgb_map.reshape(H, W, args.observation_channel).cpu(), depth_map.reshape(H, W).cpu(), spec_map.reshape(H, W, args.spec_channel).cpu().numpy()
 
         if rgb_map.shape[-1] != 1:
             depth_map, _ = visualize_depth_numpy(depth_map.numpy(),near_far)
@@ -157,6 +158,8 @@ def evaluation_path(test_dataset,tensorf, c2ws, renderer, savePath=None, N_vis=5
             imageio.imwrite(f'{savePath}/{prtx}{idx:03d}.png', rgb_map)
             rgb_map = np.concatenate((rgb_map, depth_map), axis=1)
             imageio.imwrite(f'{savePath}/rgbd/{prtx}{idx:03d}.png', rgb_map)
+            sio.savemat(f'{savePath}/spec/{prtx}{idx:03d}.mat', {'spec': spec_map})
+
 
     imageio.mimwrite(f'{savePath}/{prtx}video.mp4', np.stack(rgb_maps), fps=30, quality=8)
     imageio.mimwrite(f'{savePath}/{prtx}depthvideo.mp4', np.stack(depth_maps), fps=30, quality=8)

@@ -235,7 +235,7 @@ class TensorBase(torch.nn.Module):
         if args.ssf_model == 'fcn':
             self.ssfnet = SSFFcn(2, args.observation_channel).to(device)
         else:
-            self.ssfnet = SSF_RBF(8).to(device)
+            self.ssfnet = SSF_RBF(4).to(device)
 
         self.depth_linear = Depth_linear().to(device)
 
