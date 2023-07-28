@@ -149,6 +149,8 @@ def config_parser(cmd=None):
     parser.add_argument("--crop_hw", type=int, action="append")
     parser.add_argument("--TV_weight_spec", type=float, default=0.1)
     parser.add_argument("--filters_folder", type=str, default='filters')
+    # parser.add_argument("--increment_training", action='store_true')
+    parser.add_argument("--increment_iter", type=int, action="append") # [start iteration (relative to the rgb4shape_endIter), gap round]
 
 
     if cmd is not None:

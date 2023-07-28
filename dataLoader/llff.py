@@ -265,7 +265,7 @@ class LLFFDataset:
         rays_savePath = Path(args.datadir) / f"rays_idgeo{args.colIdx4RGBTrain}_ndc{args.ndc_ray}_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
         folders = [Path(args.datadir) / args.img_dir_name.replace('??', str(i)) 
                    for i in range(args.angles)]
-        sample_matrix = self._fix_sample_matrix()
+        self.sample_matrix = self._fix_sample_matrix()
 
         W, H = self.img_wh
         # use first N_images-1 to train, the LAST is val
@@ -281,7 +281,7 @@ class LLFFDataset:
             ids4shapeTrain = []
             tensor_cropper = T.CenterCrop(args.crop_hw)
             tensor_resizer = T.Resize([H, W], antialias=True)
-            for r, row in enumerate(sample_matrix):
+            for r, row in enumerate(self.sample_matrix):
                 image_paths = sorted(glob.glob(str(folders[r] / f"images/*{args.img_ext}")))
                 for c, aimEle in enumerate(row):
                     if aimEle != 1:

@@ -139,8 +139,6 @@ def reconstruction(args):
 
     summary_writer = SummaryWriter(logfolder)
 
-
-
     # init parameters
     # tensorVM, renderer = init_parameters(args, train_dataset.scene_bbox.to(device), reso_list[0])
     aabb = train_dataset.scene_bbox.to(device)
@@ -234,6 +232,11 @@ def reconstruction(args):
             rays_train = torch.cat([rays_train, depth_rays_train])
             poseID_train = torch.cat([poseID_train, fake_poseid])
             filterID_train = torch.cat([filterID_train, fake_filterID])
+
+        # increment training: concat rays
+        rev_train_num = train_dataset.rays_rev_train.shape[]
+        raysNum_before_increm = rays_train.shape[0]
+
 
         #rgb_map, alphas_map, depth_map, weights, uncertainty
         rgb_map, alphas_map, depth_map, weights, uncertainty, dist_loss, spec_map, ssf = \
