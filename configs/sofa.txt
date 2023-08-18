@@ -8,7 +8,7 @@ angles = 15
 filters = 19
 img_ext = tiff
 img_dir_name = pose_??.mat
-sample_matrix_dir = ./find_filter/find_filter_res/random_(15,19)_80.mat
+sample_matrix_dir = ./find_filter/find_filter_res/all_sofa.mat
 
 ndc_ray = 0
 ssf_model = rbf # fcn

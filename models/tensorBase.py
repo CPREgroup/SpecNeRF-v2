@@ -502,6 +502,7 @@ class TensorBase(torch.nn.Module):
         sigma = torch.zeros(xyz_sampled.shape[:-1], device=xyz_sampled.device)
         rgb = torch.zeros((*xyz_sampled.shape[:2], args.spec_channel), device=xyz_sampled.device)
 
+        dist_loss = torch.FloatTensor([0])
         if ray_valid.any():
             xyz_sampled = self.normalize_coord(xyz_sampled)
             sigma_feature = self.compute_densityfeature(xyz_sampled[ray_valid])
@@ -517,9 +518,6 @@ class TensorBase(torch.nn.Module):
                 if args.ndc_ray == 1:
                     m = m.repeat(xyz_sampled.shape[0],1)
                 dist_loss = eff_distloss_native(w[..., :-1], m, dists[..., :-1]).reshape([1,])
-            else:
-                dist_loss = torch.FloatTensor([0])
-
 
         alpha, weight, bg_weight = raw2alpha(sigma, dists * self.distance_scale)
 
@@ -533,7 +531,7 @@ class TensorBase(torch.nn.Module):
         acc_map = torch.sum(weight, -1)
         spec_map = torch.sum(weight[..., None] * rgb, -2)
 
-        if white_bg or (is_train and torch.rand((1,))<0.5):
+        if white_bg or (is_train and torch.rand((1,))<0.0):
             spec_map = spec_map + (1. - acc_map[..., None])
         spec_map = spec_map.clamp(0,1)
 

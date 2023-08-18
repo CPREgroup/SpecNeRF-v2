@@ -1,1 +1,1 @@
-python train.py --config configs\xjhdesk.txt
+python train.py --config configs\sofa.txt

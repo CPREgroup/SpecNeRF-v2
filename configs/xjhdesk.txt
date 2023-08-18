@@ -15,7 +15,7 @@ sample_matrix_dir = ./find_filter/find_filter_res/all_mydesk.mat
 #  
 # GA_70_ep694_4.08_mydesk.mat
 
-ndc_ray = 1
+ndc_ray = 0
 ssf_model = rbf # fcn
 rgb4shape_endIter = 2000
 reset_para
@@ -44,10 +44,10 @@ N_vis = -1
 vis_every = 500
 
 export_mesh = 0
-render_only = 1
-ckpt = logexp_ssfRepresent/all_xjhdesk_RBF4/19999_all_xjhdesk_RBF4.pth
-render_test = 0
-render_train = 0
+render_only = 0
+# ckpt = logexp_ssfRepresent/all_xjhdesk_RBF4/19999_all_xjhdesk_RBF4.pth
+render_test = 1
+render_train = 1
 render_path = 1
 
 n_lamb_sigma = [10,7,7]

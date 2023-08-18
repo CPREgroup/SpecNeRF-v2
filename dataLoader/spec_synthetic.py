@@ -14,9 +14,9 @@ class FAKEDataset(LLFFDataset):
     def __init__(self, datadir, split='train', downsample=1, is_stack=False, hold_every=8):
         super().__init__(datadir, split, downsample, is_stack, hold_every)
         
-        self.near_far = [0.0, 1.0] if args.ndc_ray == 1 else [0.01, 6.0]
+        self.near_far = [0.0, 1.0] if args.ndc_ray == 1 else [0.5, 6.0]
         self.scene_bbox = torch.tensor([[-1.5, -1.67, -1.0], [1.5, 1.67, 1.0]]) if args.ndc_ray == 1 else \
-            torch.tensor([[-7.0, -7.0, -5], [7.0, 7.0, 5]])
+            torch.tensor([[-2.5, -2.5, -2.5], [2.5, 2.5, 2.5]])
         # self.scene_bbox = torch.tensor([[-1.67, -1.5, -1.0], [1.67, 1.5, 1.0]])
         self.center = torch.mean(self.scene_bbox, dim=0).float().view(1, 1, 3)
         self.invradius = 1.0 / (self.scene_bbox[1] - self.center).float().view(1, 1, 3)
@@ -24,6 +24,7 @@ class FAKEDataset(LLFFDataset):
     
     def read_meta(self):
         poses = np.load(os.path.join(self.root_dir, 'mitsuba_poses.npy'))  # (N_images, 4, 4)
+        poses = np.concatenate([poses[:, :, :1], -poses[:, :, 2:3], poses[:, :, 1:2], poses[:, :, 3:4]], -1)
 
         # load full resolution image then resize
         if self.split in ['train', 'test']:
@@ -33,16 +34,16 @@ class FAKEDataset(LLFFDataset):
         # Step 1: rescale focal length according to training resolution
         H, W = int(512 / self.downsample), int(512 / self.downsample)  # original intrinsics, same for all images
         self.img_wh = np.array([W, H])
-        self.focal = 0.5 * W / np.tan(0.5 * 40)  # original focal length
+        self.focal = [0.5 * W / np.tan(0.5 * 40)] * 2  # original focal length
 
         # build rendering path
         N_views, N_rots = 60, 1 # 120, 2
 
         self.poses, self.pose_avg = center_poses(poses[:, :3, :], self.blender2opencv)
-        self.render_path = get_spiral(self.poses, None, N_views=N_views, n_rot=N_rots, rads_scale=0.3, focal=self.focal)
+        self.render_path = get_spiral(self.poses, None, N_views=N_views, n_rot=N_rots, rads_scale=0.3, focal=self.focal[0])
 
         # ray directions for all pixels, same for all images (same H, W, focal)
-        self.directions = get_ray_directions_blender(H, W, [self.focal] * 2)  # (H, W, 3)
+        self.directions = get_ray_directions_blender(H, W, self.focal)  # (H, W, 3)
 
     def load_img(self):
         rays_savePath = Path(args.datadir) / f"rays_idgeo{args.colIdx4RGBTrain}_ndc{args.ndc_ray}_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
@@ -64,7 +65,7 @@ class FAKEDataset(LLFFDataset):
             ids4shapeTrain = []
             tensor_resizer = T.Resize([H, W], antialias=True)
             for r, row in enumerate(sample_matrix):
-                images_degraded = sio.loadmat(poses_img[r])['spec']
+                images_degraded = sio.loadmat(poses_img[r])['all_degraded']
                 for c, aimEle in enumerate(row):
                     if aimEle != 1:
                         continue
