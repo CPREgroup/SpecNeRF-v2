@@ -13,7 +13,7 @@
             "justMyCode": true,
             "args": [
                 "--config",
-                "configs/xjhdesk.txt"
+                "configs/sofa.txt"
             ]
         }
     ]

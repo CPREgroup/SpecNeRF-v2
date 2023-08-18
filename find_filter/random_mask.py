@@ -2,8 +2,8 @@ import numpy as np
 import scipy.io as sio
 
 
-num = 160
-shape = (9, 19)
+num = 80
+shape = (15, 19)
 
 
 total = shape[1] * shape[0]
@@ -15,4 +15,4 @@ mask = maskv.reshape(shape)
 
 print(mask)
 print(np.sum(mask))
-sio.savemat(f'./find_filter_res/random_{str(shape).replace(" ", "")}_{num}.mat', {'mask': mask})
+sio.savemat(f'./find_filter/find_filter_res/random_{str(shape).replace(" ", "")}_{num}.mat', {'mask': mask})

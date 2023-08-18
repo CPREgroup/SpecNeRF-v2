@@ -96,7 +96,7 @@ def viewmatrix(z, up, pos):
     return m
 
 
-def render_path_spiral(c2w, up, rads, focal, zdelta, zrate, N_rots=2, N=120):
+def render_path_spiral(c2w, up, rads, focal, zrate, N_rots=2, N=120):
     render_poses = []
     rads = np.array(list(rads) + [1.])
 
@@ -107,7 +107,7 @@ def render_path_spiral(c2w, up, rads, focal, zdelta, zrate, N_rots=2, N=120):
     return render_poses
 
 
-def get_spiral(c2ws_all, near_fars, rads_scale=1.0, N_views=120, n_rot=2):
+def get_spiral(c2ws_all, near_fars, rads_scale=1.0, N_views=120, n_rot=2, focal=None):
     # center pose
     c2w = average_poses(c2ws_all)
 
@@ -116,14 +116,14 @@ def get_spiral(c2ws_all, near_fars, rads_scale=1.0, N_views=120, n_rot=2):
 
     # Find a reasonable "focus depth" for this dataset
     dt = 0.75
-    close_depth, inf_depth = near_fars.min() * 0.9, near_fars.max() * 5.0
-    focal = 1.0 / (((1.0 - dt) / close_depth + dt / inf_depth))
+    if near_fars is not None:
+        close_depth, inf_depth = near_fars.min() * 0.9, near_fars.max() * 5.0
+        focal = 1.0 / (((1.0 - dt) / close_depth + dt / inf_depth))
 
     # Get radii for spiral path
-    zdelta = near_fars.min() * .2
     tt = c2ws_all[:, :3, 3]
     rads = np.percentile(np.abs(tt), 90, 0) * rads_scale
-    render_poses = render_path_spiral(c2w, up, rads, focal, zdelta, zrate=.5, N=N_views, N_rots=n_rot)
+    render_poses = render_path_spiral(c2w, up, rads, focal, zrate=.5, N=N_views, N_rots=n_rot)
     return np.stack(render_poses)
 
 

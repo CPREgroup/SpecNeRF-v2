@@ -1,0 +1,61 @@
+
+dataset_name = synthetic
+datadir = ./myspecdata/filters19_optimized/sofa_filter19_optimized
+basedir = ./log
+filters_folder = filters_synthetic
+expname =  all_sofa_RBF4
+angles = 15
+filters = 19
+img_ext = tiff
+img_dir_name = pose_??.mat
+sample_matrix_dir = ./find_filter/find_filter_res/random_(15,19)_80.mat
+
+ndc_ray = 0
+ssf_model = rbf # fcn
+rgb4shape_endIter = 2000
+reset_para
+# depth_supervise
+depth_batchsize_endIter = [512, 300]
+# distortion_loss
+# lsc
+spec_channel = 18
+observation_channel = 1
+band_start_idx = 0
+colIdx4RGBTrain = 0
+downsample_train = 1
+
+n_iters = 15000
+batch_size = 2048
+chunk_size = 2048
+
+N_voxel_init = 2097156 # 128**3
+N_voxel_final = 134217728 # 512**3
+upsamp_list = [4000, 6000, 9000, 12000, 15000] # [2000,3000,4000,5500,7000]
+update_AlphaMask_list = [5000, 8000] # [2000,4000]
+
+N_vis = -1
+vis_every = 500
+
+export_mesh = 0
+render_only = 0
+# ckpt = logexp_ssfRepresent/all_xjhdesk_RBF4/19999_all_xjhdesk_RBF4.pth
+render_test = 1
+render_train = 1
+render_path = 1
+
+n_lamb_sigma = [10,7,7]
+n_lamb_sh = [36,18,18]
+
+shadingMode = MLP_Fea
+fea2denseAct = relu
+featureC = 80
+
+view_pe = 2
+fea_pe = 2
+
+L1_weight_inital = 8e-5
+L1_weight_rest = 4e-5
+rm_weight_mask_thre = 1e-4
+TV_weight_density = 0.8
+TV_weight_app = 0.5
+TV_weight_spec = 0.015
