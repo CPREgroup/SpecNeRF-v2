@@ -3,12 +3,12 @@ dataset_name = synthetic
 datadir = ./myspecdata/filters19_optimized/sofa_filter19_optimized
 basedir = ./log
 filters_folder = filters_synthetic
-expname =  all_sofa_RBF4
+expname =  all_sofatest_RBF4
 angles = 15
 filters = 19
 img_ext = tiff
 img_dir_name = pose_??.mat
-sample_matrix_dir = ./find_filter/find_filter_res/all_sofa.mat
+sample_matrix_dir = ./find_filter/find_filter_res/random_(15,19)_250.mat
 
 ndc_ray = 0
 ssf_model = rbf # fcn
@@ -24,7 +24,7 @@ band_start_idx = 0
 colIdx4RGBTrain = 0
 downsample_train = 1
 
-n_iters = 15000
+n_iters = 10000
 batch_size = 2048
 chunk_size = 2048
 

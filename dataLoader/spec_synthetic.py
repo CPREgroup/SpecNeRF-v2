@@ -14,9 +14,9 @@ class FAKEDataset(LLFFDataset):
     def __init__(self, datadir, split='train', downsample=1, is_stack=False, hold_every=8):
         super().__init__(datadir, split, downsample, is_stack, hold_every)
         
-        self.near_far = [0.0, 1.0] if args.ndc_ray == 1 else [0.5, 6.0]
+        self.near_far = [0.0, 1.0] if args.ndc_ray == 1 else [1, 12.0]
         self.scene_bbox = torch.tensor([[-1.5, -1.67, -1.0], [1.5, 1.67, 1.0]]) if args.ndc_ray == 1 else \
-            torch.tensor([[-2.5, -2.5, -2.5], [2.5, 2.5, 2.5]])
+            torch.tensor([[-3.0, -3.0, -3.0], [3.0, 3.0, 3.0]])
         # self.scene_bbox = torch.tensor([[-1.67, -1.5, -1.0], [1.67, 1.5, 1.0]])
         self.center = torch.mean(self.scene_bbox, dim=0).float().view(1, 1, 3)
         self.invradius = 1.0 / (self.scene_bbox[1] - self.center).float().view(1, 1, 3)
@@ -24,7 +24,7 @@ class FAKEDataset(LLFFDataset):
     
     def read_meta(self):
         poses = np.load(os.path.join(self.root_dir, 'mitsuba_poses.npy'))  # (N_images, 4, 4)
-        poses = np.concatenate([poses[:, :, :1], -poses[:, :, 2:3], poses[:, :, 1:2], poses[:, :, 3:4]], -1)
+        # poses = np.concatenate([poses[:, :, :1], -poses[:, :, 2:3], poses[:, :, 1:2], poses[:, :, 3:4]], -1)
 
         # load full resolution image then resize
         if self.split in ['train', 'test']:
