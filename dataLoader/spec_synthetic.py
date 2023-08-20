@@ -17,9 +17,9 @@ class FAKEDataset(LLFFDataset):
 
 
     def parameter_setting(self):
-        self.near_far = [0.0, 1.0] if args.ndc_ray == 1 else [2, 12.0]
+        self.near_far = [0.0, 1.0] if args.ndc_ray == 1 else [0.5, 6.0]
         self.scene_bbox = torch.tensor([[-1.5, -1.67, -1.0], [1.5, 1.67, 1.0]]) if args.ndc_ray == 1 else \
-            torch.tensor([[-6.0, -6.0, -6.0], [6.0, 6.0, 6.0]])
+            torch.tensor([[-2.0, -2.0, -2.0], [2.0, 2.0, 2.0]])
         # self.scene_bbox = torch.tensor([[-1.67, -1.5, -1.0], [1.67, 1.5, 1.0]])
         self.center = torch.mean(self.scene_bbox, dim=0).float().view(1, 1, 3)
         self.invradius = 1.0 / (self.scene_bbox[1] - self.center).float().view(1, 1, 3)

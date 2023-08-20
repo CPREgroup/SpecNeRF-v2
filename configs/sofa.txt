@@ -24,7 +24,7 @@ band_start_idx = 0
 colIdx4RGBTrain = 0
 downsample_train = 1
 
-n_iters = 10000
+n_iters = 15000
 batch_size = 2048
 chunk_size = 2048
 
