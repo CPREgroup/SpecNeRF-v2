@@ -1,6 +1,8 @@
 __pycache__/
 data/
 log/
+logexp/
+logexp_ssfRepresent/
 myspecdata/
 myspecdata
 find_filter/
