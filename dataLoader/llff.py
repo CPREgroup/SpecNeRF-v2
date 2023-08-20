@@ -159,12 +159,15 @@ class LLFFDataset:
         self.is_stack = is_stack
         self.downsample = downsample
 
+        self.parameter_setting()
         self.blender2opencv = np.eye(4)#np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
         self.prepare_filters(LLFFDataset)
         self.read_meta() # read poses, also for depth data and rays
         self.load_img() # read images and form rays
         self.white_bg = args.white_bkgd
 
+
+    def parameter_setting(self):
         #         self.near_far = [np.min(self.near_fars[:,0]),np.max(self.near_fars[:,1])]
         self.near_far = [0.0, 1.0] if args.ndc_ray == 1 else [0.01, 6.0]
         self.scene_bbox = torch.tensor([[-1.5, -1.67, -1.0], [1.5, 1.67, 1.0]]) if args.ndc_ray == 1 else \

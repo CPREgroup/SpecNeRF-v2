@@ -9,22 +9,27 @@ from PIL import Image
 from torchvision import transforms as T
 import scipy.io as sio
 
+
 class FAKEDataset(LLFFDataset):
 
     def __init__(self, datadir, split='train', downsample=1, is_stack=False, hold_every=8):
         super().__init__(datadir, split, downsample, is_stack, hold_every)
-        
-        self.near_far = [0.0, 1.0] if args.ndc_ray == 1 else [1, 12.0]
+
+
+    def parameter_setting(self):
+        self.near_far = [0.0, 1.0] if args.ndc_ray == 1 else [2, 12.0]
         self.scene_bbox = torch.tensor([[-1.5, -1.67, -1.0], [1.5, 1.67, 1.0]]) if args.ndc_ray == 1 else \
-            torch.tensor([[-3.0, -3.0, -3.0], [3.0, 3.0, 3.0]])
+            torch.tensor([[-6.0, -6.0, -6.0], [6.0, 6.0, 6.0]])
         # self.scene_bbox = torch.tensor([[-1.67, -1.5, -1.0], [1.67, 1.5, 1.0]])
         self.center = torch.mean(self.scene_bbox, dim=0).float().view(1, 1, 3)
         self.invradius = 1.0 / (self.scene_bbox[1] - self.center).float().view(1, 1, 3)
+        self.mitsuba2blender = np.array([[-1, 1, -1, 1], [1, -1, 1, -1], [-1, 1, -1, 1], [1]*4])
 
-    
+        
     def read_meta(self):
         poses = np.load(os.path.join(self.root_dir, 'mitsuba_poses.npy'))  # (N_images, 4, 4)
-        # poses = np.concatenate([poses[:, :, :1], -poses[:, :, 2:3], poses[:, :, 1:2], poses[:, :, 3:4]], -1)
+        poses[:, [1, 2], :] = poses[:, [2, 1], :]
+        poses *= self.mitsuba2blender
 
         # load full resolution image then resize
         if self.split in ['train', 'test']:
@@ -40,7 +45,7 @@ class FAKEDataset(LLFFDataset):
         N_views, N_rots = 60, 1 # 120, 2
 
         self.poses, self.pose_avg = center_poses(poses[:, :3, :], self.blender2opencv)
-        self.render_path = get_spiral(self.poses, None, N_views=N_views, n_rot=N_rots, rads_scale=0.3, focal=self.focal[0])
+        self.render_path = get_spiral(self.poses, None, N_views=N_views, n_rot=N_rots, rads_scale=0.8, focal=self.focal[0])
 
         # ray directions for all pixels, same for all images (same H, W, focal)
         self.directions = get_ray_directions_blender(H, W, self.focal)  # (H, W, 3)
