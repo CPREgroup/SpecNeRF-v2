@@ -23,13 +23,13 @@ class FAKEDataset(LLFFDataset):
         # self.scene_bbox = torch.tensor([[-1.67, -1.5, -1.0], [1.67, 1.5, 1.0]])
         self.center = torch.mean(self.scene_bbox, dim=0).float().view(1, 1, 3)
         self.invradius = 1.0 / (self.scene_bbox[1] - self.center).float().view(1, 1, 3)
-        self.mitsuba2blender = np.array([[-1, 1, -1, 1], [1, -1, 1, -1], [-1, 1, -1, 1], [1]*4])
+        self.mitsuba2blender = np.array([[-1]*4, [1]*4, [-1]*4, [1]*4]).T
 
         
     def read_meta(self):
         poses = np.load(os.path.join(self.root_dir, 'mitsuba_poses.npy'))  # (N_images, 4, 4)
-        poses[:, [1, 2], :] = poses[:, [2, 1], :]
-        poses *= self.mitsuba2blender
+        # poses[:, [1, 2], :] = poses[:, [2, 1], :]
+        # poses *= self.mitsuba2blender
 
         # load full resolution image then resize
         if self.split in ['train', 'test']:
