@@ -2,7 +2,7 @@ import numpy as np
 import scipy.io as sio
 
 
-num = 15*19 - 3
+num = 20
 shape = (15, 19)
 
 

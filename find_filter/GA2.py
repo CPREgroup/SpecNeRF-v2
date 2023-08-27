@@ -3,7 +3,6 @@ import itertools
 import os
 import random
 import sys
-sys.path.append(r'../myutils')
 sys.path.append(r'E:\pythonProject\python3\myutils_v2')
 sys.path.append(os.getcwd())
 import time
@@ -20,7 +19,6 @@ import filesort_int
 from multiprocessing.dummy import Pool
 from scipy.spatial.transform import Rotation
 from Images import Plt_subplot_in_loop_or_ion
-# import gascore
 
 # myd = Online_breakpoint_debug()
 # myd.start()
@@ -345,20 +343,20 @@ class GeneSolve:
 
 
 if __name__ == '__main__':
-    outfile = f'find_filter/find_filter_res/sofa_sigma0d5_dir1d5_num80' # lab_trans_sigma0d3_wei1d0_num40
+    outfile = f'find_filter/find_filter_res/xjhdesk_sigma0d5_dir1d5_num20' # lab_trans_sigma0d3_wei1d0_num40
     if not os.path.exists(outfile):
         os.makedirs(outfile)
 
     sigma = 0.5 # dis
-    number = 80 
+    number = 20 
     cosSim_gamma = 1.5 # view dir exp
     ssfs_var_weight = 1
     print(f'running sigma = {sigma}')
     print(f'running number = {number}')
     t1 = time.time()
-    gs = GeneSolve(r'./myspecdata/filters19_optimized/sofa_filter19_optimized/poses_bounds.npy',
-                   r'./myspecdata/filters19_optimized/filters_synthetic/*.mat',
-                   20000, 1000, 0.65, 0.1, 1.05, (15, 19), number, np.sqrt(sigma))
+    gs = GeneSolve(r'./myspecdata\filters19_optimized\xjhdesk/poses_bounds.npy',
+                   r'./myspecdata\filters19_optimized\filters_interp25/*.mat',
+                   20000, 1000, 0.65, 0.1, 1.05, (9, 19), number, np.sqrt(sigma))
     gs.evolve()
     t2 = time.time()
 

@@ -232,10 +232,6 @@ class LLFFDataset:
 
         # build rendering path
         N_views, N_rots = 60, 1 # 120, 2
-        tt = self.poses[:, :3, 3]  # ptstocam(poses[:3,3,:].T, c2w).T
-        up = normalize(self.poses[:, :3, 1].sum(0))
-        rads = np.percentile(np.abs(tt), 90, 0)
-
         self.render_path = get_spiral(self.poses, self.near_fars, N_views=N_views, n_rot=N_rots, rads_scale=0.3)
 
         # distances_from_center = np.linalg.norm(self.poses[..., 3], axis=1)
@@ -249,9 +245,6 @@ class LLFFDataset:
         if args.depth_supervise:
             self.depth_rays = self.get_depth_rays()
             self.combine_depthimages()
-
-        average_pose = average_poses(self.poses)
-        dists = np.sum(np.square(average_pose[:3, 3] - self.poses[:, :3, 3]), -1)
 
 
     def _fix_sample_matrix(self):

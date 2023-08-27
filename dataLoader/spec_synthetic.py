@@ -16,40 +16,6 @@ class FAKEDataset(LLFFDataset):
         super().__init__(datadir, split, downsample, is_stack, hold_every)
 
 
-    def parameter_setting(self):
-        self.near_far = [0.0, 1.0] if args.ndc_ray == 1 else [0.5, 6.0]
-        self.scene_bbox = torch.tensor([[-1.5, -1.67, -1.0], [1.5, 1.67, 1.0]]) if args.ndc_ray == 1 else \
-            torch.tensor([[-2.0, -2.0, -2.0], [2.0, 2.0, 2.0]])
-        # self.scene_bbox = torch.tensor([[-1.67, -1.5, -1.0], [1.67, 1.5, 1.0]])
-        self.center = torch.mean(self.scene_bbox, dim=0).float().view(1, 1, 3)
-        self.invradius = 1.0 / (self.scene_bbox[1] - self.center).float().view(1, 1, 3)
-        self.mitsuba2blender = np.array([[-1]*4, [1]*4, [-1]*4, [1]*4]).T
-
-        
-    def read_meta(self):
-        poses = np.load(os.path.join(self.root_dir, 'mitsuba_poses.npy'))  # (N_images, 4, 4)
-        # poses[:, [1, 2], :] = poses[:, [2, 1], :]
-        # poses *= self.mitsuba2blender
-
-        # load full resolution image then resize
-        if self.split in ['train', 'test']:
-            assert len(poses) == args.angles, \
-                'Mismatch between number of args.angles and number of poses! Please rerun COLMAP!'
-
-        # Step 1: rescale focal length according to training resolution
-        H, W = int(512 / self.downsample), int(512 / self.downsample)  # original intrinsics, same for all images
-        self.img_wh = np.array([W, H])
-        self.focal = [0.5 * W / np.tan(0.5 * 40)] * 2  # original focal length
-
-        # build rendering path
-        N_views, N_rots = 60, 1 # 120, 2
-
-        self.poses, self.pose_avg = center_poses(poses[:, :3, :], self.blender2opencv)
-        self.render_path = get_spiral(self.poses, None, N_views=N_views, n_rot=N_rots, rads_scale=0.8, focal=self.focal[0])
-
-        # ray directions for all pixels, same for all images (same H, W, focal)
-        self.directions = get_ray_directions_blender(H, W, self.focal)  # (H, W, 3)
-
     def load_img(self):
         rays_savePath = Path(args.datadir) / f"rays_idgeo{args.colIdx4RGBTrain}_ndc{args.ndc_ray}_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
         poses_img = [Path(args.datadir) / args.img_dir_name.replace('??', str(i)) 
