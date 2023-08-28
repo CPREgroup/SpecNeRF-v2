@@ -2,8 +2,8 @@ import numpy as np
 import scipy.io as sio
 
 
-num = 20
-shape = (15, 19)
+num = 250
+shape = (15, 18)
 
 
 total = shape[1] * shape[0]

@@ -240,7 +240,7 @@ def TVloss_Spectral(specmap):
     # specmap n x 31
     # shifted = torch.roll(specmap, shifts=1, dims=1)
     # return (((shifted - specmap) / (specmap.detach() + 1e-7)) ** 2).mean()
-    return (((specmap[:, 1:] - specmap[:, :-1]) / (specmap[:, :-1].detach() + 1e-7)) ** 2).mean()
+    return (((specmap[:, 1:] - specmap[:, :-1]) / (specmap[:, :-1].detach() + 1e-7))).abs().mean()
 
 class SpectralFix:
     def __init__(self) -> None:
