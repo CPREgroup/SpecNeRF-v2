@@ -166,16 +166,17 @@ class SSF_RBF(torch.nn.Module):
         super(SSF_RBF, self).__init__()
 
         self.comps = comps
-        self.params = nn.Parameter(torch.rand(comps, 3)) # alpha, mean, sigma
+        self.alpha = nn.Parameter(torch.FloatTensor([1 / comps]))
+        self.params = nn.Parameter(torch.rand(comps, 2)) # alpha, mean, sigma
         self.x = torch.linspace(0, 1, args.spec_channel).reshape([args.spec_channel, -1]).cuda()
 
     def rbf(self, mean, sigma):
-        return torch.exp(-(self.x - mean) ** 2 / (sigma ** 2))
+        return torch.exp(-(self.x - mean) ** 2 / (2 * (sigma ** 2)))
 
     def forward(self, _):
         ssf = 0
-        for alpha, mean, sigma in self.params:
-            v = self.rbf(mean, sigma) * alpha # / self.comps
+        for mean, sigma in self.params:
+            v = self.rbf(mean, sigma) * self.alpha.abs()
             ssf = ssf + v
 
         return ssf.clamp(0, 1)

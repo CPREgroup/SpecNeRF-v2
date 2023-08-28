@@ -263,15 +263,15 @@ def reconstruction(args):
             summary_writer.add_scalar('train/dist_loss', dist_loss, global_step=iteration)
 
 
-        rgbloss = (((rgb_map - rgb_train) / (rgb_map.detach() + 0.01)) ** 2).mean()
+        rgbloss = (((rgb_map - rgb_train) / (rgb_map.detach() + 0.001)) ** 2).mean()
         psnrloss = criterian(rgb_map, rgb_train).detach().item() # temp
 
         # loss
         total_loss = rgbloss + depth_loss + dist_loss
-        if args.ssf_model == 'rbf':
-            RBFweights = tensorf.ssfnet.params[:, 0]
-            weight_reg = (RBFweights ** 2).mean()
-            total_loss += weight_reg * 0.1
+        # if args.ssf_model == 'rbf':
+        #     RBFweights = tensorf.ssfnet.params[:, 0]
+        #     weight_reg = (RBFweights ** 2).mean()
+        #     total_loss += weight_reg * 0.1
 
         if args.TV_weight_spec > 0:
             loss_specTV = TVloss_Spectral(spec_map)
