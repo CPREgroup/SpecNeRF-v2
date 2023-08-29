@@ -3,7 +3,7 @@ dataset_name = synthetic
 datadir = ./myspecdata/filters18_gauss/sofa
 basedir = ./logexp
 filters_folder = filters
-expname = rand250_sofaGauss_RBF4_fea_quick
+expname = rand250_sofaGauss_RBF4_fea_smaller
 angles = 15
 filters = 18
 img_ext = tiff
@@ -37,20 +37,21 @@ update_AlphaMask_list = [3000, 7000] # [2000,4000]
 
 N_vis = -1
 vis_every = 500
+lr_upsample_reset = 0
 
 export_mesh = 0
 render_only = 0
 # ckpt = logexp_ssfRepresent/all_xjhdesk_RBF4/19999_all_xjhdesk_RBF4.pth
 render_test = 1
 render_train = 0
-render_path = 1
+render_path = 0
 
 n_lamb_sigma = [10,7,7]
-n_lamb_sh = [36,18,18]
+n_lamb_sh = [24,9,9]
 
 shadingMode = MLP_Fea
 fea2denseAct = relu
-featureC = 80
+featureC = 64
 
 view_pe = 2
 fea_pe = 0

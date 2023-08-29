@@ -17,57 +17,44 @@ class FAKEDataset(LLFFDataset):
 
 
     def load_img(self):
-        rays_savePath = Path(args.datadir) / f"rays_idgeo{args.colIdx4RGBTrain}_ndc{args.ndc_ray}_{self.split}_ds{self.downsample}_mtx{os.path.split(args.sample_matrix_dir)[1][:-4]}.pth"
         poses_img = [Path(args.datadir) / args.img_dir_name.replace('??', str(i)) 
                    for i in range(args.angles)]
         sample_matrix = self._fix_sample_matrix()
 
         W, H = self.img_wh
         # use first N_images-1 to train, the LAST is val
-        if os.path.exists(rays_savePath):
-            data = torch.load(rays_savePath)
-            all_rays, all_rgbs, all_poses, all_filtersIdx, ids4shapeTrain = \
-                data['rays'], data['rgbs'], data['poses'], data['filterids'], data['id4geo']
-        else:
-            all_rays = []
-            all_rgbs = []
-            all_poses = []
-            all_filtersIdx = []
-            ids4shapeTrain = []
-            tensor_resizer = T.Resize([H, W], antialias=True)
-            for r, row in enumerate(sample_matrix):
-                images_degraded = sio.loadmat(poses_img[r])['all_degraded']
-                for c, aimEle in enumerate(row):
-                    if aimEle != 1:
-                        continue
-                    elif c == args.colIdx4RGBTrain:
-                        # it's for geometry training
-                        ids4shapeTrain.append(len(all_rays))
+        all_rays = []
+        all_rgbs = []
+        all_poses = []
+        all_filtersIdx = []
+        ids4shapeTrain = []
+        tensor_resizer = T.Resize([H, W], antialias=True)
+        for r, row in enumerate(sample_matrix):
+            images_degraded = sio.loadmat(poses_img[r])['all_degraded']
+            for c, aimEle in enumerate(row):
+                if aimEle != 1:
+                    continue
+                elif c == args.colIdx4RGBTrain:
+                    # it's for geometry training
+                    ids4shapeTrain.append(len(all_rays))
 
-                    img = torch.FloatTensor(images_degraded[:, :, c:c+1]).permute(2, 0, 1)
-                    c2w = torch.FloatTensor(self.poses[r])
+                img = torch.FloatTensor(images_degraded[:, :, c:c+1]).permute(2, 0, 1)
+                c2w = torch.FloatTensor(self.poses[r])
 
-                    if self.downsample != 1.0:
-                        img = tensor_resizer(img)
+                if self.downsample != 1.0:
+                    img = tensor_resizer(img)
 
-                    img = img.reshape(args.observation_channel, -1).permute(1, 0)  # (h*w, 3) RGB
-                    all_rgbs.append(img)
+                img = img.reshape(args.observation_channel, -1).permute(1, 0)  # (h*w, 3) RGB
+                all_rgbs.append(img)
 
-                    rays_o, rays_d = get_rays(self.directions, c2w)  # both (h*w, 3)
-                    if args.ndc_ray == 1:
-                        rays_o, rays_d = ndc_rays_blender(H, W, self.focal[0], 1.0, rays_o, rays_d)
-                    # viewdir = rays_d / torch.norm(rays_d, dim=-1, keepdim=True)
-                    all_rays.append(torch.cat([rays_o, rays_d], 1))  # (h*w, 6)
-                    all_poses.append(torch.LongTensor([[r]]).expand([rays_o.shape[0], -1]))
-                    all_filtersIdx.append(torch.LongTensor([[c]]).expand([rays_o.shape[0], -1]))
+                rays_o, rays_d = get_rays(self.directions, c2w)  # both (h*w, 3)
+                if args.ndc_ray == 1:
+                    rays_o, rays_d = ndc_rays_blender(H, W, self.focal[0], 1.0, rays_o, rays_d)
+                # viewdir = rays_d / torch.norm(rays_d, dim=-1, keepdim=True)
+                all_rays.append(torch.cat([rays_o, rays_d], 1))  # (h*w, 6)
+                all_poses.append(torch.LongTensor([[r]]).expand([rays_o.shape[0], -1]))
+                all_filtersIdx.append(torch.LongTensor([[c]]).expand([rays_o.shape[0], -1]))
 
-            torch.save({
-                'rgbs': all_rgbs,
-                'rays': all_rays,
-                'poses': all_poses,
-                'filterids': all_filtersIdx,
-                'id4geo': ids4shapeTrain
-            }, rays_savePath)
         print(f'{len(all_rgbs)} of images are loaded!')
 
         self.ids4shapeTrain = ids4shapeTrain
