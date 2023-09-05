@@ -167,11 +167,14 @@ class TensorVMSplit(TensorBase):
                     {'params': self.depth_linear.parameters(), 'lr': lr_init_network},
                     {'params': self.app_line, 'lr': lr_init_spatialxyz, 'myname': 'appLine'}, 
                     {'params': self.app_plane, 'lr': lr_init_spatialxyz, 'myname': 'appPlane'},
-                    {'params': self.basis_mat.parameters(), 'lr':lr_init_network, 'myname': 'basisMat'},
-                    {'params': self.ssfnet.parameters(), 'lr': lr_init_network, 'myname': 'ssffcn'}
+                    {'params': self.basis_mat.parameters(), 'lr':lr_init_network, 'myname': 'basisMat'}
                     ]
         if isinstance(self.renderModule, torch.nn.Module):
             grad_vars += [{'params':self.renderModule.parameters(), 'lr':lr_init_network, 'myname': 'renderMdl'}]
+        
+        if args.ssf_model != 'gt':
+            grad_vars += [{'params': self.ssfnet.parameters(), 'lr': lr_init_network, 'myname': 'ssffcn'}]
+        
         return grad_vars
 
 

@@ -268,10 +268,12 @@ def reconstruction(args):
 
         # loss
         total_loss = rgbloss + depth_loss + dist_loss
-        # if args.ssf_model == 'rbf':
-        #     RBFweights = tensorf.ssfnet.params[:, 0]
-        #     weight_reg = (RBFweights ** 2).mean()
-        #     total_loss += weight_reg * 0.1
+        # if 'rbf' in args.ssf_model.lower():
+        #     loss_ssfTV = TVloss_SSF(ssf)
+        #     total_loss += loss_ssfTV * 0.1
+        #     RBFmeans = tensorf.ssfnet.params[:, 0]
+        #     spreadloss = 1 / calculate_sum_diff(RBFmeans)
+        #     total_loss += spreadloss * 0.01
 
         if args.TV_weight_spec > 0:
             loss_specTV = TVloss_Spectral(spec_map)
@@ -332,7 +334,7 @@ def reconstruction(args):
             saveModel(tensorf, f'{logfolder}/{iteration}_{args.expname}.pth')
             sio.savemat(f'{logfolder}/SSFs/ssf_{iteration}.mat',
                         {'ssf': ssf.cpu().detach().numpy()})
-            if args.ssf_model == 'rbf':
+            if 'rbf' in args.ssf_model.lower():
                 sio.savemat(f'{logfolder}/SSFs/RBFparams/param_{iteration}.mat',
                             {'rbf': tensorf.ssfnet.params.data.cpu().detach().numpy()})
 

@@ -8,6 +8,7 @@ from opt import args
 from torch_efficient_distloss import eff_distloss, eff_distloss_native, flatten_eff_distloss
 from utils import norm0to1, positionencoding1D
 from dataLoader.llff import LLFFDataset
+import scipy.io as sio
 
 def positional_encoding(positions, freqs):
     freq_bands = (2**torch.arange(freqs).float()).to(positions.device)  # (F,)
@@ -166,20 +167,54 @@ class SSF_RBF(torch.nn.Module):
         super(SSF_RBF, self).__init__()
 
         self.comps = comps
-        self.alpha = nn.Parameter(torch.FloatTensor([1 / comps]))
-        self.params = nn.Parameter(torch.rand(comps, 2)) # alpha, mean, sigma
+        # self.alpha = nn.Parameter(torch.FloatTensor([1 / comps]))
+        self.params = nn.Parameter(torch.rand(args.observation_channel * comps, 3)) # alpha, mean, sigma
         self.x = torch.linspace(0, 1, args.spec_channel).reshape([args.spec_channel, -1]).cuda()
 
     def rbf(self, mean, sigma):
         return torch.exp(-(self.x - mean) ** 2 / (2 * (sigma ** 2)))
 
     def forward(self, _):
-        ssf = 0
-        for mean, sigma in self.params:
-            v = self.rbf(mean, sigma) * self.alpha.abs()
-            ssf = ssf + v
+        ssf = []
+        for mean, sigma, alpha in self.params:
+            v = self.rbf(mean, sigma) * alpha.abs()
+            ssf.append(v)
+        ssf = torch.cat(ssf, 1).reshape(-1, args.observation_channel, self.comps).sum(-1)
 
-        return ssf.clamp(0, 1)
+        return ssf if ssf.max() <= 1 else ssf / ssf.max().detach()
+
+
+class SSF_NEURBF(torch.nn.Module):
+    def __init__(self, comps, L):
+        super(SSF_NEURBF, self).__init__()
+
+        self.comps = comps
+        # self.alpha = nn.Parameter(torch.FloatTensor([1 / comps]))
+        self.x = torch.linspace(0, 1, args.spec_channel).reshape([args.spec_channel, -1]).cuda()
+        self.input_1D = torch.from_numpy(positionencoding1D(args.observation_channel * comps, L)).float().cuda()
+        self.layers = nn.Sequential(
+            nn.Linear(in_features=2 * L + 1, out_features=2*L),
+            nn.LeakyReLU(inplace=True),
+            nn.Linear(in_features=2*L, out_features=2*L),
+            nn.LeakyReLU(inplace=True),
+            nn.Linear(in_features=2*L, out_features=2*L),
+            nn.LeakyReLU(inplace=True),
+            nn.Linear(in_features=2*L, out_features=3),
+            nn.Sigmoid()
+        )
+
+    def rbf(self, mean, sigma):
+        return torch.exp(-(self.x - mean) ** 2 / (2 * (sigma ** 2)))
+
+    def forward(self, _):
+        self.params = self.layers(self.input_1D) * 3 - 1
+        ssf = []
+        for mean, sigma, alpha in self.params:
+            v = self.rbf(mean, sigma) * alpha.abs()
+            ssf.append(v)
+        ssf = torch.cat(ssf, 1).reshape(-1, args.observation_channel, self.comps).sum(-1)
+
+        return ssf if ssf.max() <= 1 else ssf / ssf.max().detach()
 
 
 class Depth_linear(torch.nn.Module):
@@ -235,8 +270,13 @@ class TensorBase(torch.nn.Module):
         # self.input_1D = positionalencoding1d_my(8, 31).to(device)
         if args.ssf_model == 'fcn':
             self.ssfnet = SSFFcn(2, args.observation_channel).to(device)
+        elif args.ssf_model == 'rbf':
+            self.ssfnet = SSF_RBF(6).to(device)
+        elif args.ssf_model == 'gt':
+            gt = torch.from_numpy(sio.loadmat(f'{args.datadir}/ssf_GT.mat')['ssf']).float().T.to(device)
+            self.ssfnet = lambda *args: gt
         else:
-            self.ssfnet = SSF_RBF(4).to(device)
+            self.ssfnet = SSF_NEURBF(4, 4).cuda()
 
         self.depth_linear = Depth_linear().to(device)
 

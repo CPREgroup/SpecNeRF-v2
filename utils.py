@@ -216,6 +216,13 @@ def rgb_ssim(img0, img1, max_val,
     return ssim_map if return_map else ssim
 
 
+def calculate_sum_diff(tensor_arr):
+    diff_matrix = tensor_arr.view(-1, 1) - tensor_arr
+    upper_triangle = torch.triu(diff_matrix, diagonal=1).abs()
+    result = torch.sum(upper_triangle)
+    return result
+
+
 import torch.nn as nn
 class TVLoss(nn.Module):
     def __init__(self,TVLoss_weight=1):
@@ -240,7 +247,12 @@ def TVloss_Spectral(specmap):
     # specmap n x 31
     # shifted = torch.roll(specmap, shifts=1, dims=1)
     # return (((shifted - specmap) / (specmap.detach() + 1e-7)) ** 2).mean()
-    return (((specmap[:, 1:] - specmap[:, :-1]) / (specmap[:, :-1].detach() + 1e-7))).abs().mean()
+    return (((specmap[:, 1:] - specmap[:, :-1]) / (specmap[:, :-1].detach() + 1e-4)) ** 2).mean()
+
+
+def TVloss_SSF(ssf):
+    return (((ssf[1:] - ssf[:-1]) / (ssf[:-1].detach() + 1e-4)) ** 2).mean()
+
 
 class SpectralFix:
     def __init__(self) -> None:

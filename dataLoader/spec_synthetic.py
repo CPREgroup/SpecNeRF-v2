@@ -28,6 +28,7 @@ class FAKEDataset(LLFFDataset):
         all_poses = []
         all_filtersIdx = []
         ids4shapeTrain = []
+        tensor_cropper = T.CenterCrop(args.crop_hw)
         tensor_resizer = T.Resize([H, W], antialias=True)
         for r, row in enumerate(sample_matrix):
             images_degraded = sio.loadmat(poses_img[r])['all_degraded']
@@ -38,9 +39,14 @@ class FAKEDataset(LLFFDataset):
                     # it's for geometry training
                     ids4shapeTrain.append(len(all_rays))
 
-                img = torch.FloatTensor(images_degraded[:, :, c:c+1]).permute(2, 0, 1)
+                if images_degraded.ndim == 4:
+                    img = images_degraded[:, :, :, c] # for rgb image
+                else:
+                    img = images_degraded[:, :, c:c+1] # for monochroma image
+                img = torch.FloatTensor(img).permute(2, 0, 1)
                 c2w = torch.FloatTensor(self.poses[r])
-
+                
+                img = tensor_cropper(img)   # c croph cropw [0-1]
                 if self.downsample != 1.0:
                     img = tensor_resizer(img)
 
