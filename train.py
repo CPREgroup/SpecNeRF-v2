@@ -1,5 +1,6 @@
 import sys
 sys.path.append('../myutils/')
+sys.path.append('../myutils_v2/')
 sys.path.append('E:\pythonProject\python3\myutils_v2')
 
 import os

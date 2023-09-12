@@ -1,9 +1,9 @@
 
 dataset_name = synthetic
-datadir = ./myspecdata/filterset_gate/sofa
+datadir = ./myspecdata/filterset_gate/sofa_eigen
 basedir = ./logexp
-filters_folder = filters
-expname = rand206_sofaDummyRBFGateFilter_RBF2
+filters_folder = filters_eigen
+expname = rand206_sofaDummyRBFGateFilter_nmf
 angles = 15
 filters = 14
 img_ext = tiff
@@ -12,7 +12,7 @@ sample_matrix_dir = ./find_filter/find_filter_res/random_(15,14)_206.mat
 
 # white_bkgd
 ndc_ray = 1
-ssf_model = rbf # neuRBF # gt # fcn
+ssf_model = dcp_nmf # rbf # neuRBF # gt # fcn
 rgb4shape_endIter = 0
 reset_para
 # depth_supervise

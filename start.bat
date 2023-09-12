@@ -1,1 +1,1 @@
-python train.py --config configs\sofa.txt
+python train.py --config configs\sofa_eigen.txt

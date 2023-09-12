@@ -4,6 +4,7 @@ import os
 import random
 import sys
 sys.path.append(r'E:\pythonProject\python3\myutils_v2')
+sys.path.append(r'..\myutils_v2')
 sys.path.append(os.getcwd())
 import time
 import traceback
@@ -343,20 +344,20 @@ class GeneSolve:
 
 
 if __name__ == '__main__':
-    outfile = f'find_filter/find_filter_res/xjhdesk_sigma0d5_dir1d5_num20' # lab_trans_sigma0d3_wei1d0_num40
+    outfile = f'find_filter/find_filter_res/sofaDummySSF_sigma0d5_dir1d5_num100' # lab_trans_sigma0d3_wei1d0_num40
     if not os.path.exists(outfile):
         os.makedirs(outfile)
 
     sigma = 0.5 # dis
-    number = 20 
+    number = 100 
     cosSim_gamma = 1.5 # view dir exp
     ssfs_var_weight = 1
     print(f'running sigma = {sigma}')
     print(f'running number = {number}')
     t1 = time.time()
-    gs = GeneSolve(r'./myspecdata\filters19_optimized\xjhdesk/poses_bounds.npy',
-                   r'./myspecdata\filters19_optimized\filters_interp25/*.mat',
-                   20000, 1000, 0.65, 0.1, 1.05, (9, 19), number, np.sqrt(sigma))
+    gs = GeneSolve(r'myspecdata\filterset_gauss_more\sofa_noise\poses_bounds.npy',
+                   r'myspecdata\filterset_gauss_more\filters/*.mat',
+                   20000, 1000, 0.65, 0.1, 1.05, (15, 54), number, np.sqrt(sigma))
     gs.evolve()
     t2 = time.time()
 

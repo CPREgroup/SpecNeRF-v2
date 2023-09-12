@@ -13,7 +13,7 @@
             "justMyCode": true,
             "args": [
                 "--config",
-                "configs/sofa_gauss.txt"
+                "configs/sofa_eigen.txt"
             ]
         }
     ]

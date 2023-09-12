@@ -2,8 +2,8 @@ import numpy as np
 import scipy.io as sio
 
 
-num = 15*54 - 8
-shape = (15, 54)
+num = 15*14 - 4
+shape = (15, 14)
 
 
 total = shape[1] * shape[0]

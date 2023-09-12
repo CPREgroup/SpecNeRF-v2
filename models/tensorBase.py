@@ -217,6 +217,34 @@ class SSF_NEURBF(torch.nn.Module):
         return ssf if ssf.max() <= 1 else ssf / ssf.max().detach()
 
 
+class SSF_DCP(torch.nn.Module):
+    def __init__(self):
+        super(SSF_DCP, self).__init__()
+
+        if 'pca' in args.ssf_model:
+            database = sio.loadmat(f'{args.datadir}/eigenSSF.mat')
+            Reigen = torch.from_numpy(database['eigenR']).float().cuda()
+            Geigen = torch.from_numpy(database['eigenG']).float().cuda()
+            Beigen = torch.from_numpy(database['eigenB']).float().cuda()
+        else:
+            database = sio.loadmat(f'{args.datadir}/nmf5SSF.mat')
+            Reigen = torch.from_numpy(database['Wr']).float().cuda()
+            Geigen = torch.from_numpy(database['Wg']).float().cuda()
+            Beigen = torch.from_numpy(database['Wb']).float().cuda()
+        self.eigens = [Reigen, Geigen, Beigen]
+
+        self.factors = nn.Parameter(torch.rand(args.observation_channel, Reigen.shape[-1]))
+
+    def forward(self, _):
+        ssf = []
+        for i in range(0, len(self.eigens)):
+            ssf.append(self.eigens[i] @ self.factors[i])
+        
+        ssf = torch.stack(ssf, 1)
+
+        return ssf if ssf.max() <= 1 else ssf / ssf.max().detach()
+
+
 class Depth_linear(torch.nn.Module):
     def __init__(self):
         super(Depth_linear, self).__init__()
@@ -271,10 +299,12 @@ class TensorBase(torch.nn.Module):
         if args.ssf_model == 'fcn':
             self.ssfnet = SSFFcn(2, args.observation_channel).to(device)
         elif args.ssf_model == 'rbf':
-            self.ssfnet = SSF_RBF(6).to(device)
+            self.ssfnet = SSF_RBF(2).to(device)
         elif args.ssf_model == 'gt':
             gt = torch.from_numpy(sio.loadmat(f'{args.datadir}/ssf_GT.mat')['ssf']).float().T.to(device)
             self.ssfnet = lambda *args: gt
+        elif 'dcp' in args.ssf_model:
+            self.ssfnet = SSF_DCP().to(device)
         else:
             self.ssfnet = SSF_NEURBF(4, 4).cuda()
 
