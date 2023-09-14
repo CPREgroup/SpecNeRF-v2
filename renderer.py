@@ -66,6 +66,7 @@ def evaluation(test_dataset:LLFFDataset,tensorf, args, renderer, savePath=None, 
 
         rgb_map, depth_map, spec_map = rgb_map.reshape(H, W, args.observation_channel).cpu(), depth_map.reshape(H, W).cpu(), spec_map.reshape(H, W, args.spec_channel).cpu().numpy()
 
+        depth_map_raw = depth_map.numpy().copy()
         if rgb_map.shape[-1] != 1:
             depth_map, _ = visualize_depth_numpy(depth_map.numpy(),near_far)
         else:
@@ -94,7 +95,7 @@ def evaluation(test_dataset:LLFFDataset,tensorf, args, renderer, savePath=None, 
             imageio.imwrite(f'{savePath}/rgbd/{prtx}{idx:03d}.png', rgb_map)
             # save spec.mat
             sio.savemat(f'{savePath}/spec/{prtx}{idx:03d}.mat', {'spec': spec_map})
-            sio.savemat(f'{savePath}/rgbd/{prtx}{idx:03d}_depth.mat', {'depth': depth_map})
+            sio.savemat(f'{savePath}/rgbd/{prtx}{idx:03d}_depth.mat', {'depth': depth_map_raw})
 
     # imageio.mimwrite(f'{savePath}/{prtx}video.mp4', np.stack(rgb_maps), fps=30, quality=10)
     # imageio.mimwrite(f'{savePath}/{prtx}depthvideo.mp4', np.stack(depth_maps), fps=30, quality=10)

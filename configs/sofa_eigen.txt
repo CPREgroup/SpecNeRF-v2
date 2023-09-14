@@ -3,12 +3,12 @@ dataset_name = synthetic
 datadir = ./myspecdata/filterset_gate/sofa_eigen
 basedir = ./logexp
 filters_folder = filters_eigen
-expname = rand206_sofaDummyRBFGateFilter_nmf
+expname = rand10_sofaDummyRBFGateFilter_nmf5
 angles = 15
 filters = 14
 img_ext = tiff
 img_dir_name = pose_blackbg_??.mat
-sample_matrix_dir = ./find_filter/find_filter_res/random_(15,14)_206.mat
+sample_matrix_dir = ./find_filter/find_filter_res/random_(15,14)_10.mat
 
 # white_bkgd
 ndc_ray = 1
@@ -41,7 +41,7 @@ lr_upsample_reset = 1
 
 export_mesh = 0
 render_only = 0
-# ckpt = logexp_ssfRepresent/all_xjhdesk_RBF4/19999_all_xjhdesk_RBF4.pth
+# ckpt = logexp/rand206_sofaDummyRBFGateFilter_nmf5/rand206_sofaDummyRBFGateFilter_nmf5.th
 render_test = 1
 render_train = 0
 render_path = 1
