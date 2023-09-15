@@ -5,6 +5,17 @@ Jiabao Li, Yuqi Li∗, Ciliang Sun, Chong Wang, and Jinhui Xiang
 
 
 
+https://github.com/CPREgroup/SpecNeRF-v2/assets/56912131/7a6223e3-715f-4ee1-843e-fa6dba526fe8
+
+
+https://github.com/CPREgroup/SpecNeRF-v2/assets/56912131/fe5ad55a-c5d5-4ee6-a094-fd44ac9668bc
+
+
+https://github.com/CPREgroup/SpecNeRF-v2/assets/56912131/8068b304-3735-417c-9e11-8613da2a0db2
+
+
+
+
 ## Intro
 
 Spec-NeRF jointly optimizes the degradation parameters and achieves high-quality multi-spectral image reconstruction results at novel views, which only requires a low-cost camera (like phone camera but in RAW mode) and several off-the-shelf color filters. We also provide real scenario and synthetic datasets for related studies.
