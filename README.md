@@ -1,6 +1,12 @@
 # SPEC-NERF: MULTI-SPECTRAL NEURAL RADIANCE FIELDS
 Jiabao Li, Yuqi Li∗, Ciliang Sun, Chong Wang, and Jinhui Xiang
 
+## Video Demo
+
+<video id="video" controls="" preload="none">
+      <source id="mp4" src="https://github.com/CPREgroup/SpecNeRF-v2/blob/spec/media/ambient.mp4" type="video/mp4">
+</videos>
+
 ## Intro
 
 Spec-NeRF jointly optimizes the degradation parameters and achieves high-quality multi-spectral image reconstruction results at novel views, which only requires a low-cost camera (like phone camera but in RAW mode) and several off-the-shelf color filters. We also provide real scenario and synthetic datasets for related studies.
