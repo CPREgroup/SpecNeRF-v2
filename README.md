@@ -3,9 +3,7 @@ Jiabao Li, Yuqi Li∗, Ciliang Sun, Chong Wang, and Jinhui Xiang
 
 ## Video Demo
 
-<video id="video" controls="" preload="none">
-      <source id="mp4" src="https://github.com/CPREgroup/SpecNeRF-v2/blob/spec/media/ambient.mp4" type="video/mp4">
-</videos>
+
 
 ## Intro
 
