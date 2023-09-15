@@ -100,6 +100,16 @@ def render_test(args):
         os.makedirs(f'{logfolder}/{args.expname}/imgs_path_all', exist_ok=True)
         evaluation_path(test_dataset,tensorf, c2ws, renderer, f'{logfolder}/{args.expname}/imgs_path_all/',
                                 N_vis=-1, N_samples=-1, white_bg = white_bg, ndc_ray=ndc_ray,device=device)
+        
+    if args.render_test_exhibition:
+        filtersets = [np.array([1/31] * 31)] # sio.loadmat(args.exhibition_filters_path)['filtersets'][0].tolist()
+        ssfs = sio.loadmat(args.exhibition_ssfs_path)['ssfs'][0].tolist()[:1]
+        lights = sio.loadmat(args.exhibition_lights_path)['spds'][0].tolist()
+        c2ws = test_dataset.render_path
+        os.makedirs(f'{logfolder}/{args.expname}/imgs_ambient_exhibition', exist_ok=True)
+        exhibition(test_dataset,tensorf, c2ws, renderer, f'{logfolder}/{args.expname}/imgs_ambient_exhibition/',scale=True,
+                        N_samples=-1, white_bg = white_bg, ndc_ray=ndc_ray, filtersets=filtersets, ssfs=ssfs, lights=lights)
+
 
 def reconstruction(args):
 
@@ -413,7 +423,7 @@ if __name__ == '__main__':
         export_mesh(args)
         exit(0)
 
-    if args.render_only and (args.render_test or args.render_path):
+    if args.render_only and (args.render_test or args.render_path or args.render_test_exhibition):
         render_test(args)
     else:
         reconstruction(args)

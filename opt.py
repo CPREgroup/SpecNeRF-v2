@@ -150,6 +150,11 @@ def config_parser(cmd=None):
     parser.add_argument("--crop_hw", type=int, action="append")
     parser.add_argument("--TV_weight_spec", type=float, default=0.1)
     parser.add_argument("--filters_folder", type=str, default='filters')
+    parser.add_argument('--render_test_exhibition',type=int,default=0)
+    parser.add_argument("--exhibition_filters_path", type=str, default='none.mat')
+    parser.add_argument("--exhibition_ssfs_path", type=str, default='none.mat')
+    parser.add_argument("--exhibition_lights_path", type=str, default='none.mat')
+    parser.add_argument("--exhibition_lightorigin_path", type=str, default='none.mat')
 
 
     if cmd is not None:

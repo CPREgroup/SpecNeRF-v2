@@ -609,8 +609,11 @@ class TensorBase(torch.nn.Module):
         # prepare a ssf
         Phi = self.ssfnet(self.input_1D)  # self.Phi*self.Phi
 
-        rgb_map = (spec_map * filters) @ Phi
-        rgb_map = rgb_map.clamp(0,1)
+        if args.render_test_exhibition == 0:
+            rgb_map = (spec_map * filters) @ Phi
+            rgb_map = rgb_map.clamp(0,1)
+        else:
+            rgb_map = None
 
         # with torch.no_grad():
         depth_map = torch.sum(weight * z_vals, -1)

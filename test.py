@@ -1,15 +1,7 @@
 import numpy as np
-from scipy.spatial.distance import pdist, squareform
+import scipy.io as sio
 
-import torch
+f = sio.loadmat('myspecdata/filters19_optimized/xjhdesk/exhibition/ssfs.mat')['ssfs'][0].tolist()
 
-def calculate_sum_diff(arr):
-    tensor_arr = torch.tensor(arr)
-    diff_matrix = tensor_arr.view(-1, 1) - tensor_arr
-    upper_triangle = torch.triu(diff_matrix, diagonal=1).abs()
-    result = torch.sum(upper_triangle)
-    return result
+print(f)
 
-array = [5, 2, 3]  # 用实际的值代替 a, b, c, d
-result = calculate_sum_diff(array)
-print(result)

@@ -1,14 +1,14 @@
 
 dataset_name = llff
 datadir = ./myspecdata/filters19_optimized/xjhdesk
-basedir = ./log
+basedir = ./logexp
 filters_folder = filters
-expname =  rand160_xjhdesk
+expname =  all_xjhdesk_RBF4_fea128
 angles = 9
 filters = 19
 img_ext = tiff
 img_dir_name = pose??img
-sample_matrix_dir = ./find_filter/find_filter_res/random_(9,19)_160.mat
+sample_matrix_dir = ./find_filter/find_filter_res/all_mydesk.mat
 # GA_80_ep1998_4.276_xjhdesk.mat
 # ./find_filter/find_filter_res/all_mydesk.mat
 # ./find_filter_res/random_(9,19)_80.mat
@@ -32,7 +32,7 @@ downsample_train = 2
 crop_hw = [1000, 1500]
 
 
-n_iters = 15000
+n_iters = 25000
 batch_size = 4096
 chunk_size = 4096
 
@@ -45,18 +45,23 @@ N_vis = -1
 vis_every = 500
 
 export_mesh = 0
-render_only = 0
-# ckpt = logexp_ssfRepresent/all_xjhdesk_RBF4/19999_all_xjhdesk_RBF4.pth
-render_test = 1
+render_only = 1
+ckpt = logexp/all_xjhdesk_RBF4_fea128/24999_all_xjhdesk_RBF4_fea128.pth
+render_test = 0
 render_train = 0
-render_path = 1
+render_path = 0
+render_test_exhibition = 1
+exhibition_filters_path = myspecdata/filters19_optimized/xjhdesk/exhibition/filtersets.mat
+exhibition_ssfs_path = myspecdata/filters19_optimized/xjhdesk/exhibition/ssfs.mat
+exhibition_lights_path = myspecdata/filters19_optimized/xjhdesk/exhibition/lightsSPD.mat
+exhibition_lightorigin_path = myspecdata/filters19_optimized/xjhdesk/lightspec.mat
 
 n_lamb_sigma = [10,7,7]
 n_lamb_sh = [36,18,18]
 
 shadingMode = MLP_Fea
 fea2denseAct = relu
-featureC = 80
+featureC = 128
 
 view_pe = 2
 fea_pe = 2
