@@ -1,4 +1,5 @@
-# SpecNeRF
+# SPEC-NERF: MULTI-SPECTRAL NEURAL RADIANCE FIELDS
+Jiabao Li, Yuqi Li∗, Ciliang Sun, Chong Wang, and Jinhui Xiang
 
 ## Intro
 
