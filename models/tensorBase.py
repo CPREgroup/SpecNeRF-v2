@@ -179,7 +179,7 @@ class SSF_RBF(torch.nn.Module):
         for mean, sigma, alpha in self.params:
             v = self.rbf(mean, sigma) * alpha.abs()
             ssf.append(v)
-        ssf = torch.cat(ssf, 1).reshape(-1, args.observation_channel, self.comps).sum(-1)
+        ssf = torch.cat(ssf, 1).reshape(-1, args.observation_channel, self.comps).mean(-1)
 
         return ssf if ssf.max() <= 1 else ssf / ssf.max().detach()
 
@@ -299,14 +299,14 @@ class TensorBase(torch.nn.Module):
         if args.ssf_model == 'fcn':
             self.ssfnet = SSFFcn(2, args.observation_channel).to(device)
         elif args.ssf_model == 'rbf':
-            self.ssfnet = SSF_RBF(2).to(device)
+            self.ssfnet = SSF_RBF(args.ssf_model_components).to(device)
         elif args.ssf_model == 'gt':
             gt = torch.from_numpy(sio.loadmat(f'{args.datadir}/ssf_GT.mat')['ssf']).float().T.to(device)
             self.ssfnet = lambda *args: gt
         elif 'dcp' in args.ssf_model:
             self.ssfnet = SSF_DCP().to(device)
         else:
-            self.ssfnet = SSF_NEURBF(4, 4).cuda()
+            self.ssfnet = SSF_NEURBF(args.ssf_model_components, 4).cuda()
 
         self.depth_linear = Depth_linear().to(device)
 

@@ -1,7 +1,5 @@
 from pathlib import Path
 import sys
-sys.path.append('../myutils/')
-sys.path.append('E:\pythonProject\python3\myutils_v2')
 import cv2,torch
 import numpy as np
 from PIL import Image
@@ -9,7 +7,6 @@ import torchvision.transforms as T
 import torch.nn.functional as F
 import scipy.signal
 from opt import args
-from myutils import normalization
 
 mse2psnr = lambda x : -10. * torch.log(x) / torch.log(torch.Tensor([10.]))
 
@@ -253,16 +250,6 @@ def TVloss_Spectral(specmap):
 def TVloss_SSF(ssf):
     return (((ssf[1:] - ssf[:-1]) / (ssf[:-1].detach() + 1e-4)) ** 2).mean()
 
-
-class SpectralFix:
-    def __init__(self) -> None:
-        weight, _ = normalization(0.1 * torch.exp(torch.arange(1-args.spec_channel, 1)))
-        weight[:args.spec_channel - 3] = 0
-        self.weight = weight.cuda()
-
-    def __call__(self, specmap):
-        fixed = (self.weight * specmap).abs().mean()
-        return fixed
 
 
 import plyfile
