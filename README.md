@@ -2,19 +2,23 @@
 Jiabao Li, Yuqi Li∗, Ciliang Sun, Chong Wang, and Jinhui Xiang
 
 ## Video Demo
+With spectral information of the scenario, we can achieve several art effects, like
+
+### Change the filters
+
+https://github.com/CPREgroup/SpecNeRF-v2/assets/56912131/7a6223e3-715f-4ee1-843e-fa6dba526fe8
 
 
-
-(https://github.com/CPREgroup/SpecNeRF-v2/assets/56912131/7a6223e3-715f-4ee1-843e-fa6dba526fe8|width=50)
-
+### Change the camera's SSF
 
 https://github.com/CPREgroup/SpecNeRF-v2/assets/56912131/fe5ad55a-c5d5-4ee6-a094-fd44ac9668bc
 
 
+### Change the ambient light source spectrum
+
 https://github.com/CPREgroup/SpecNeRF-v2/assets/56912131/8068b304-3735-417c-9e11-8613da2a0db2
 
 
-<img src="https://github.com/CPREgroup/SpecNeRF-v2/assets/56912131/8068b304-3735-417c-9e11-8613da2a0db2" width="200">
 
 ## Intro
 
