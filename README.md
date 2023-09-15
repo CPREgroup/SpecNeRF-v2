@@ -5,7 +5,7 @@ Jiabao Li, Yuqi Li∗, Ciliang Sun, Chong Wang, and Jinhui Xiang
 
 
 
-https://github.com/CPREgroup/SpecNeRF-v2/assets/56912131/7a6223e3-715f-4ee1-843e-fa6dba526fe8
+(https://github.com/CPREgroup/SpecNeRF-v2/assets/56912131/7a6223e3-715f-4ee1-843e-fa6dba526fe8|width=50)
 
 
 https://github.com/CPREgroup/SpecNeRF-v2/assets/56912131/fe5ad55a-c5d5-4ee6-a094-fd44ac9668bc
