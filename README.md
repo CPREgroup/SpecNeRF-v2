@@ -2,7 +2,7 @@
 
 ## Intro
 
-Spec-NeRF jointly optimizes the degradation parameters and achieves high-quality multi-spectral image reconstruction results at novel views, which only requires a low-cost camera and filters. We also provide real scenario and synthetic datasets for related studies.
+Spec-NeRF jointly optimizes the degradation parameters and achieves high-quality multi-spectral image reconstruction results at novel views, which only requires a low-cost camera (like phone camera but in RAW mode) and several off-the-shelf color filters. We also provide real scenario and synthetic datasets for related studies.
 
 ## Preliminaries
 
