@@ -14,7 +14,7 @@ https://github.com/CPREgroup/SpecNeRF-v2/assets/56912131/fe5ad55a-c5d5-4ee6-a094
 https://github.com/CPREgroup/SpecNeRF-v2/assets/56912131/8068b304-3735-417c-9e11-8613da2a0db2
 
 
-
+<img src="https://github.com/CPREgroup/SpecNeRF-v2/assets/56912131/8068b304-3735-417c-9e11-8613da2a0db2" width="200">
 
 ## Intro
 
