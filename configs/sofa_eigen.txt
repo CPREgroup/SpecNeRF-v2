@@ -1,6 +1,6 @@
 
 dataset_name = synthetic
-datadir = ./myspecdata/filterset_gate/sofa_eigen
+datadir = ./multi-view-MSI/filterGate/sofa_eigen
 basedir = ./logexp
 filters_folder = filters_eigen
 expname = rand60_sofa_nmf5-test

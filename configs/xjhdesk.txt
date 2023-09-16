@@ -1,9 +1,9 @@
 
 dataset_name = llff
-datadir = ./myspecdata/filters19_optimized/xjhdesk
+datadir = ./multi-view-MSI/filter19/xjhdesk
 basedir = ./logexp
 filters_folder = filters
-expname = rand120_xjhdesk_RBF4-test
+expname =  rand120_xjhdesk_RBF4
 angles = 9
 filters = 19
 img_ext = tiff
