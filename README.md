@@ -45,6 +45,7 @@ We conduct our experiments based on [TensoRF](https://apchenstu.github.io/TensoR
 
 
 ## Quick Start
-wait a minute too ...
+
+`./start` or try `python train.py --config ./configs/<your config file>.txt`
 
 

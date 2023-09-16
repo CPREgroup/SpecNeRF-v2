@@ -138,7 +138,7 @@ def config_parser(cmd=None):
     parser.add_argument('--depth_supervise', action='store_true')
     parser.add_argument('--reset_para', action='store_true')
     parser.add_argument('--rgb4shape_endIter', type=int,default=0)
-    parser.add_argument('--depth_batchsize_endIter', type=int, action="append")
+    parser.add_argument('--depth_batchsize_endIter', type=int, action="append", default=[0, 0])
     parser.add_argument('--sample_matrix_dir',type=str,default='null')
     parser.add_argument('--img_ext',type=str,default='dng')
     parser.add_argument('--ssf_model',type=str,default='fcn', help='fcn or rbf')
