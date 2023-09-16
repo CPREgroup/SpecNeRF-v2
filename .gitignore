@@ -5,6 +5,7 @@ logexp/
 logexp_ssfRepresent/
 data/
 myspecdata/
+multi-view-MSI/
 find_filter/cppNcuda/dist
 find_filter/cppNcuda/build
 find_filter/cppNcuda/include

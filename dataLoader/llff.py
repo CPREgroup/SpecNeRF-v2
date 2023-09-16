@@ -141,7 +141,6 @@ def _find_test_sample(mtx):
     return sample_mtx
 
 class LLFFDataset:
-    white = T.ToTensor()(sio.loadmat('./myspecdata/decorner/meanwhite_max.mat')['data'])
     # black = T.ToTensor()(sio.loadmat('./myspecdata/decorner/meanblack.mat')['data'])
     filters_back = []
     depth_mean = 1
@@ -158,6 +157,11 @@ class LLFFDataset:
         self.hold_every = hold_every
         self.is_stack = is_stack
         self.downsample = downsample
+
+        if args.lsc:
+            # fix the vignetting effect
+            LLFFDataset.white = T.ToTensor()(sio.loadmat('./meanwhite_max.mat')['data'])
+
 
         self.parameter_setting()
         self.blender2opencv = np.eye(4)#np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
