@@ -7,7 +7,7 @@
 Spec-NeRF jointly optimizes the degradation parameters and achieves high-quality multi-spectral image reconstruction results at novel views, which only requires a low-cost camera (like a phone camera but in RAW mode) and several off-the-shelf color filters. We also provide real scenarios and synthetic datasets for related studies.
 
 ## Video Demo
-With spectral information of the scenario, we can achieve several art effects, like
+With recovered spectral information of the scenario, we can achieve several art effects, like
 
 ### Change the filters
 
@@ -31,7 +31,7 @@ https://github.com/CPREgroup/SpecNeRF-v2/assets/56912131/b230b331-8f53-46ac-8d8e
 
 ## Preliminaries
 
-We conduct our experiments based on [TensoRF](https://apchenstu.github.io/TensoRF/), you are welcome to test our code using the `spec` branch in this repo, but it may lack some comments since the code is still being organized. Feel free to report issues, we'd be very appreciative of it!
+We conduct our experiments based on [TensoRF](https://apchenstu.github.io/TensoRF/), **please use the branch named `public` in our repository** and feel free to report issues, we'd really appreciate it!
 
 
 
@@ -41,11 +41,15 @@ We conduct our experiments based on [TensoRF](https://apchenstu.github.io/TensoR
 
 ## Dataset
 * wait a minute ...
-
+Download the two types of datasets (real senario and synthetic one) from [google drive]
 
 
 ## Quick Start
 
-`./start` or try `python train.py --config ./configs/<your config file>.txt`
+Check what's in start/start.bat file and execute `./start` | `start.bat` 
+
+or try 
+
+`python train.py --config ./configs/<your config file>.txt`
 
 
