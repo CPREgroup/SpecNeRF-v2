@@ -1,6 +1,7 @@
 # SPEC-NERF: MULTI-SPECTRAL NEURAL RADIANCE FIELDS
 [Jiabao Li](https://github.com/TIMESTICKING), [Yuqi Li*](https://github.com/kylin-leo), Ciliang Sun, Chong Wang, and Jinhui Xiang
 
+Please be patient, paper is still under review in arxiv.
 
 ## Intro
 
