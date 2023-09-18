@@ -1,7 +1,7 @@
-# SPEC-NERF: MULTI-SPECTRAL NEURAL RADIANCE FIELDS
+# Spec-NeRF: Multi-Spectral Neural Radiance Fields
 [Jiabao Li](https://github.com/TIMESTICKING), [Yuqi Li*](https://github.com/kylin-leo), Ciliang Sun, Chong Wang, and Jinhui Xiang
 
-Please be patient, paper is still under review in arxiv.
+Please be patient, paper is still under review in Arxiv.
 
 ## Intro
 
@@ -43,7 +43,7 @@ We conduct our experiments based on [TensoRF](https://apchenstu.github.io/TensoR
 ## Dataset
 Download the two types of datasets (real senario and synthetic one) from [google drive](https://drive.google.com/file/d/1wBux0JdsimjoDJfBvOuo8lJWi9ekk3cD/view?usp=drivesdk).
 
-For the real dataset, please first separate the images to pose-based groups since all raw images are in the folder `RAW` by running `python split_allimg2filterfixed_classify.py --scene_dir <your full path>/multi-view-MSI/filter19/xjhdesk --filter_num 20 --legacy 0 --angle_num 9 --img_ext tiff` as administrator or root. 
+For the real dataset, please first separate the images into pose-based groups since all raw images are in the folder `RAW` by running `python split_allimg2filterfixed_classify.py --scene_dir <your full path>/multi-view-MSI/filter19/xjhdesk --filter_num 20 --legacy 0 --angle_num 9 --img_ext tiff` as administrator or root. 
 
 This will generate nine folders named *pose?img*, each contains the images filtered by all color filters, which are the symbolic links point to the ones in `RAW` folder, so remember **do not** delete the `RAW` folder.
 
