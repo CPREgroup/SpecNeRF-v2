@@ -1,7 +1,7 @@
 # Spec-NeRF: Multi-Spectral Neural Radiance Fields
 [Jiabao Li](https://github.com/TIMESTICKING), [Yuqi Li*](https://github.com/kylin-leo), Ciliang Sun, Chong Wang, and Jinhui Xiang
 
-Please be patient, paper is still under review in Arxiv.
+Check the preprint version [here](https://www.techrxiv.org/articles/preprint/Spec-NeRF_Multi-Spectral_Neural_Radiance_Fields/24188235).
 
 ## Intro
 
